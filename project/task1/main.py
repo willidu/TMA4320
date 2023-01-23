@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def brownian_1d(M, pr=0.5):
+def brownian_single_1D(M, pr=0.5):
     """
     Brownian motion for a single particle with M steps.
 
@@ -32,7 +32,7 @@ def brownian_1d(M, pr=0.5):
 
     return np.arange(M+1), positions
 
-def brownian_many_particles(N, M, pr=0.5):
+def brownian_N_1D(N, M, pr=0.5):
     """
     Brownian motion for N particles with M steps.
 
@@ -54,8 +54,8 @@ def brownian_many_particles(N, M, pr=0.5):
     """
     assert 0. < pr < 1., 'Invalid probability pr'
 
-    positions = np.zeros((N, M))
-    random_values = np.random.uniform(0, 1, (N, M))
+    positions = np.zeros((M, N))
+    random_values = np.random.uniform(0, 1, (M, N))
     for i in range(M):
         for j in range(N):
             if random_values[i,j] <= pr:
@@ -65,11 +65,39 @@ def brownian_many_particles(N, M, pr=0.5):
 
     return np.arange(M), positions
 
+def brownian_N_1D_vectorized(N, M, pr=0.5):
+    """
+    Brownian motion for N particles with M steps.
+
+    Parameters
+    ----------
+    N : int
+        Number of particles
+    M : int
+        Number of moves.
+    pr : float
+        Probability for taking a step to the right.
+
+    Returns
+    -------
+    np.array
+        Time array, 1D.
+    np.array
+        Position array, 2D.
+    """
+    assert 0. < pr < 1., 'Invalid probability pr'
+
+    random_values = np.random.uniform(0, 1, (M, N))
+    steps = np.where(random_values <= pr, +1, -1)
+    positions = np.cumsum(steps, axis=0)
+
+    return np.arange(M), positions
+
 def task_1c():
     M = 10_000
 
     for pr in (0.45, 0.5, 0.55):
-        plt.plot(*brownian_1d(M, pr), label=r'$p_r$ = '+f'{pr:.2f}')
+        plt.plot(*brownian_single_1D(M, pr), label=r'$p_r$ = '+f'{pr:.2f}')
 
     plt.legend()
     plt.xlabel('Step number')
@@ -82,12 +110,21 @@ def task_1c():
 
 def task_1d():
     # Testing implementation in Task 1d.
-    plt.plot(*brownian_many_particles(N=1000, M=1000, pr=0.5))
+    plt.plot(*brownian_N_1D(N=100, M=1000, pr=0.5))
+    plt.title('Task 1d')
+    plt.show()
+
+def task_1e():
+    # Testing implementation in Task 1e.
+    # TODO at timing
+    plt.plot(*brownian_N_1D_vectorized(N=100, M=1000, pr=0.5))
+    plt.title('Task 1e')
     plt.show()
 
 def main():
     task_1c()
     task_1d()
+    task_1e()
 
 if __name__ == '__main__':
     main()
