@@ -116,10 +116,15 @@ def task_1d():
 
 def task_1e():
     # Testing implementation in Task 1e.
-    # TODO at timing
+    # TODO ad timing
     plt.plot(*brownian_N_1D_vectorized(N=100, M=1000, pr=0.5))
     plt.title('Task 1e')
     plt.show()
+
+    """
+    We can assume the function is faster since it does not use for-loops. Using only numpy arrays, the machine can
+    perform the calculations in C/C++ which makes them go faster than in native Python.
+    """
 
 def main():
     task_1c()
