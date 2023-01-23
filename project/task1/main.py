@@ -1,5 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+def D(dx=1., dt=1.):
+    """
+    Gives the constant in Eq. 5.
+    """
+    return dx ** 2 / (2 * dt)
 
 def brownian_single_1D(M, pr=0.5):
     """
@@ -93,6 +100,37 @@ def brownian_N_1D_vectorized(N, M, pr=0.5):
 
     return np.arange(M), positions
 
+def brownian_N_2D(N, M, pr=0.5, pu=0.5):
+    """
+    Brownian motion for N particles with M steps in two dimensions.
+
+    Parameters
+    ----------
+    N : int
+        Number of particles
+    M : int
+        Number of moves.
+    pr : float
+        Probability for taking a step to the right.
+
+    Returns
+    -------
+    np.array
+        Time array, 1D.
+    np.array
+        Position array, 3D. Dimension ( numAtoms, timePoints, (x,y) ).
+    """
+    assert 0. < pr < 1., 'Invalid probability pr'
+
+    positions = np.zeros((N, M, 2))
+    random_values = np.random.uniform(0, 1, size=positions.shape)
+    steps_x = np.where(random_values[:,:,0] < pr, +1, -1)
+    steps_u = np.where(random_values[:,:,1] < pu, +1, -1)
+    positions[:,:,0] += steps_x
+    positions[:,:,1] += steps_u
+
+    return np.arange(M), np.cumsum(positions, axis=1)
+
 def task_1c():
     M = 10_000
 
@@ -121,15 +159,59 @@ def task_1e():
     plt.title('Task 1e')
     plt.show()
 
-    """
-    We can assume the function is faster since it does not use for-loops. Using only numpy arrays, the machine can
-    perform the calculations in C/C++ which makes them go faster than in native Python.
-    """
+    # We can assume the function is faster since it does not use for-loops. Using only numpy arrays, the machine can
+    # perform the calculations in C/C++ which makes them go faster than in native Python.
+
+def task_1f():
+    t, _ = brownian_N_1D_vectorized(N=1000, M=1000, pr=0.5)
+    sigma_sq = 2 * D() * t
+
+    plt.plot(t, sigma_sq)
+    plt.title(r'Empirical variance, $\Delta x = 1 = \Delta t$')
+    plt.xlabel('Time steps')
+    plt.ylabel(r'Variance $\sigma^2$')
+
+    # Gives a straight line, as one would excpect from 1a.
+
+    a, b = curve_fit(lambda x, a, b: a*x + b, xdata=t, ydata=sigma_sq)[0]
+    print(f'Linear fit: a = {a:.3e}, b = {b:.3e}')
+
+    # We observe that the slope is equal to 1 and the y intercept is approximately 10^-12.
+    # Dont know if higher N or M will improve stuff.
+
+    plt.show()
+
+def task_1g():
+    # Isotrop system
+    t, pos = brownian_N_2D(N=4, M=1000)
+
+    # For every atom, plot the scatter plot of position in x and y for all time points
+    for n in range(len(pos)):
+        plt.scatter(pos[n,:,0], pos[n,:,1])
+
+    plt.xlabel('x position')
+    plt.ylabel('y position')
+    plt.title(f'Brownian motion in 2D \nN = 4, M = 1000, ' + r'$p_r = 0.5 = p_u$')
+    plt.show()
+
+    # Non-isotrop system
+    t, pos = brownian_N_2D(N=4, M=1000, pr=0.65, pu=0.35)
+
+    # For every atom, plot the scatter plot of position in x and y for all time points
+    for n in range(len(pos)):
+        plt.scatter(pos[n,:,0], pos[n,:,1])
+
+    plt.xlabel('x position')
+    plt.ylabel('y position')
+    plt.title(f'Brownian motion in 2D \nN = 4, M = 1000, ' + r'$p_r = 0.65, p_u = 0.35$')
+    plt.show()
 
 def main():
     task_1c()
     task_1d()
     task_1e()
+    task_1f()
+    task_1g()
 
 if __name__ == '__main__':
     main()
