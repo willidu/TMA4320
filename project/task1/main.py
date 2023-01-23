@@ -90,7 +90,7 @@ def brownian_N_1D_vectorized(N, M, pr=0.5):
     np.array
         Time array, 1D.
     np.array
-        Position array, 2D.
+        Position array, 2D. (M, N)
     """
     assert 0. < pr < 1., 'Invalid probability pr'
 
@@ -118,18 +118,18 @@ def brownian_N_2D(N, M, pr=0.5, pu=0.5):
     np.array
         Time array, 1D.
     np.array
-        Position array, 3D. Dimension ( numAtoms, timePoints, (x,y) ).
+        Position array, 3D. Dimension ( M, N, (x,y) ).
     """
     assert 0. < pr < 1., 'Invalid probability pr'
 
-    positions = np.zeros((N, M, 2))
+    positions = np.zeros((M, N, 2))
     random_values = np.random.uniform(0, 1, size=positions.shape)
     steps_x = np.where(random_values[:,:,0] < pr, +1, -1)
     steps_u = np.where(random_values[:,:,1] < pu, +1, -1)
     positions[:,:,0] += steps_x
     positions[:,:,1] += steps_u
 
-    return np.arange(M), np.cumsum(positions, axis=1)
+    return np.arange(M), np.cumsum(positions, axis=0)
 
 def task_1c():
     M = 10_000
@@ -182,12 +182,14 @@ def task_1f():
     plt.show()
 
 def task_1g():
+    N = 4
+    M = 1000
     # Isotrop system
-    t, pos = brownian_N_2D(N=4, M=1000)
+    t, pos = brownian_N_2D(N, M)
 
     # For every atom, plot the scatter plot of position in x and y for all time points
-    for n in range(len(pos)):
-        plt.scatter(pos[n,:,0], pos[n,:,1])
+    for n in range(N):
+        plt.scatter(pos[:,n,0], pos[:,n,1])
 
     plt.xlabel('x position')
     plt.ylabel('y position')
@@ -195,11 +197,11 @@ def task_1g():
     plt.show()
 
     # Non-isotrop system
-    t, pos = brownian_N_2D(N=4, M=1000, pr=0.65, pu=0.35)
+    t, pos = brownian_N_2D(N, M, pr=0.65, pu=0.35)
 
     # For every atom, plot the scatter plot of position in x and y for all time points
-    for n in range(len(pos)):
-        plt.scatter(pos[n,:,0], pos[n,:,1])
+    for n in range(N):
+        plt.scatter(pos[:,n,0], pos[:,n,1])
 
     plt.xlabel('x position')
     plt.ylabel('y position')
