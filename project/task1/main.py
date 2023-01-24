@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from numba import njit
 
 def D(dx=1., dt=1.):
     """
@@ -134,6 +135,38 @@ def brownian_N_2D(N, M, pr=0.5, py=0.5):
 
     return np.arange(M), np.cumsum(positions, axis=0)
 
+@njit
+def count_zeros_N_1D(positions: np.ndarray):
+    """
+    Calculates n(t) for N particles in 1D.
+
+    Parameters
+    ----------
+    positions : np.ndarray, (M, N)
+        Positional array with time as first axis.
+
+    Returns
+    -------
+    np.ndarray, (M,)
+        Time array.
+    np.ndarray, (M,)
+        Array with n(t) values.
+    """
+    M, N = positions.shape
+    n = np.zeros(M)
+
+    for t in range(1, M):
+        count = 0
+        for i in range(N):
+            if positions[t,i] == 0:
+                count += 1
+        n[t] = n[t-1] + count / (t * N)
+
+    return np.arange(M), n
+
+def count_zeros_N_2D():
+    pass
+
 def task_1c():
     M = 10_000
 
@@ -211,12 +244,28 @@ def task_1g():
     plt.title(f'Brownian motion in 2D \nN = 4, M = 1000, ' + r'$p_r = 0.65, p_u = 0.35$')
     plt.show()
 
+def task_1i():
+    N = 10
+    M = 10_000
+
+    # Isotrop system
+    _, pos = brownian_N_1D_vectorized(N, M)
+    t, n = count_zeros_N_1D(pos)
+
+    plt.plot(t, n)
+    plt.xlabel('Time steps')
+    plt.ylabel('n(t)')
+    plt.title(f'{N = }, {M = }')
+    plt.axhline(y=1, ls='--', c='k', alpha=0.5)
+    plt.show()
+
 def main():
     task_1c()
     task_1d()
     task_1e()
     task_1f()
     task_1g()
+    task_1i()
 
 if __name__ == '__main__':
     main()
