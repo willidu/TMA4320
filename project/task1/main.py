@@ -100,7 +100,7 @@ def brownian_N_1D_vectorized(N, M, pr=0.5):
 
     return np.arange(M), positions
 
-def brownian_N_2D(N, M, pr=0.5, pu=0.5):
+def brownian_N_2D(N, M, pr=0.5, py=0.5):
     """
     Brownian motion for N particles with M steps in two dimensions.
 
@@ -112,6 +112,8 @@ def brownian_N_2D(N, M, pr=0.5, pu=0.5):
         Number of moves.
     pr : float
         Probability for taking a step to the right.
+    py : float
+        Probability for taking a step upwards.
 
     Returns
     -------
@@ -121,13 +123,14 @@ def brownian_N_2D(N, M, pr=0.5, pu=0.5):
         Position array, 3D. Dimension ( M, N, (x,y) ).
     """
     assert 0. < pr < 1., 'Invalid probability pr'
+    assert 0. < py < 1., 'Invalid probability py'
 
     positions = np.zeros((M, N, 2))
     random_values = np.random.uniform(0, 1, size=positions.shape)
     steps_x = np.where(random_values[:,:,0] < pr, +1, -1)
-    steps_u = np.where(random_values[:,:,1] < pu, +1, -1)
+    steps_y = np.where(random_values[:,:,1] < py, +1, -1)
     positions[:,:,0] += steps_x
-    positions[:,:,1] += steps_u
+    positions[:,:,1] += steps_y
 
     return np.arange(M), np.cumsum(positions, axis=0)
 
@@ -197,7 +200,7 @@ def task_1g():
     plt.show()
 
     # Non-isotrop system
-    t, pos = brownian_N_2D(N, M, pr=0.65, pu=0.35)
+    t, pos = brownian_N_2D(N, M, pr=0.65, py=0.35)
 
     # For every atom, plot the scatter plot of position in x and y for all time points
     for n in range(N):
