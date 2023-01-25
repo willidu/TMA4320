@@ -234,23 +234,22 @@ def task_1e():
     # perform the calculations in C/C++ which makes them go faster than in native Python.
 
 def task_1f():
-    t, _ = brownian_N_1D_vectorized(N=1000, M=1000, pr=0.5)
-    sigma_sq = 2 * D() * t
-
-    plt.plot(t, sigma_sq)
-    plt.title(r'Empirical variance, $\Delta x = 1 = \Delta t$')
-    plt.xlabel('Time steps')
-    plt.ylabel(r'Variance $\sigma^2$')
-
-    # Gives a straight line, as one would excpect from 1a.
+    t, pos = brownian_N_1D_vectorized(N=1000, M=1000, pr=0.5)
+    sigma_sq = np.var(pos, axis=1, ddof=1)
 
     a, b = curve_fit(lambda x, a, b: a*x + b, xdata=t, ydata=sigma_sq)[0]
     print(f'Linear fit: a = {a:.3e}, b = {b:.3e}')
 
-    # We observe that the slope is equal to 1 and the y intercept is approximately 10^-12.
-    # Dont know if higher N or M will improve stuff.
-
+    plt.plot(t, a*t+b, label='Linear regression')
+    plt.plot(t, sigma_sq, label='Empirical')
+    plt.title(r'Empirical variance, $\Delta x = 1 = \Delta t$')
+    plt.xlabel('Time steps')
+    plt.ylabel(r'Variance $\sigma^2$')
+    plt.legend()
     plt.show()
+
+    # Gives a straight line, as one would excpect from 1a.
+    # Dont know if higher N or M will improve stuff.
 
 def task_1g():
     N = 4
