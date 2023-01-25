@@ -154,18 +154,53 @@ def count_zeros_N_1D(positions: np.ndarray):
     """
     M, N = positions.shape
     n = np.zeros(M)
+    been_to_origo_indicies = []
 
     for t in range(1, M):
         count = 0
         for i in range(N):
             if positions[t,i] == 0:
-                count += 1
-        n[t] = n[t-1] + count / (t * N)
+                if not (i in been_to_origo_indicies):
+                    been_to_origo_indicies.append(i)
+                    count += 1
+
+        n[t] = n[t-1] + count / N
 
     return np.arange(M), n
 
-def count_zeros_N_2D():
-    pass
+@njit
+def count_zeros_N_2D(positions: np.ndarray):
+    """
+    Calculates n(t) for N particles in 2D.
+
+    Parameters
+    ----------
+    positions : np.ndarray, (M, N, (x,y))
+        Positional array with time as first axis.
+
+    Returns
+    -------
+    np.ndarray, (M,)
+        Time array.
+    np.ndarray, (M,)
+        Array with n(t) values.
+    """
+    M, N, _ = positions.shape
+    n = np.zeros(M)
+    been_to_origo_indicies = []
+
+    for t in range(1, M):
+        count = 0
+        for i in range(N):
+            in_origo = positions[t,i,0] == 0 and positions[t,i,1] == 0
+            if in_origo:
+                if not (i in been_to_origo_indicies):
+                    been_to_origo_indicies.append(i)
+                    count += 1
+
+        n[t] = n[t-1] + count / N
+
+    return np.arange(M), n
 
 def task_1c():
     M = 10_000
@@ -245,19 +280,31 @@ def task_1g():
     plt.show()
 
 def task_1i():
-    N = 10
-    M = 10_000
+    N = 100
+    M = 100_000
 
     # Isotrop system
     _, pos = brownian_N_1D_vectorized(N, M)
     t, n = count_zeros_N_1D(pos)
+    plt.plot(t, n, label='1D')
 
-    plt.plot(t, n)
+    # Non-isotrop system
+    _, pos = brownian_N_2D(N, M)
+    t, n = count_zeros_N_2D(pos)
+    plt.plot(t, n, label='2D')
+
     plt.xlabel('Time steps')
     plt.ylabel('n(t)')
     plt.title(f'{N = }, {M = }')
     plt.axhline(y=1, ls='--', c='k', alpha=0.5)
     plt.show()
+
+    # 1D Looks correct, converges quite fast
+    # 2D also looks correct, but converges a lot slower
+    # Ran simulations with higher N and M for 2D but run time was waaaay too long
+    # Higher N does not affect convergence, only M does.
+    # Therefore n(t, M) is a good approximation of P(x=0, t->inf) for high M.
+    # Convergence also changes quite a lot from run to run, suggesting that M=100_000 is too low for 2D.
 
 def main():
     task_1c()
