@@ -249,7 +249,9 @@ def task_1f():
     plt.show()
 
     # Gives a straight line, as one would excpect from 1a.
-    # Dont know if higher N or M will improve stuff.
+    # Increasing M will only give us more values for sigma and therefore simply lengthen the range og the plot,
+    # while increasing N will yield a larger number of datapoints for each sigma, such that the variance will
+    # converge to the analytical variance.
 
 def task_1g():
     N = 4
