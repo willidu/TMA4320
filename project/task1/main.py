@@ -128,8 +128,9 @@ def brownian_N_2D(N, M, pr=0.5, py=0.5):
 
     positions = np.zeros((M, N, 2))
     random_values = np.random.uniform(0, 1, size=positions.shape)
-    steps_x = np.where(random_values[:,:,0] < pr, +1, -1)
-    steps_y = np.where(random_values[:,:,1] < py, +1, -1)
+    move_horizontal = np.random.uniform(0, 1, size=(M,N)) <= 0.5
+    steps_x = np.where(random_values[:,:,0] < pr, +1, -1) * move_horizontal
+    steps_y = np.where(random_values[:,:,1] < py, +1, -1) * (1. - move_horizontal)
     positions[:,:,0] += steps_x
     positions[:,:,1] += steps_y
 
@@ -259,7 +260,7 @@ def task_1g():
 
     # For every atom, plot the scatter plot of position in x and y for all time points
     for n in range(N):
-        plt.scatter(pos[:,n,0], pos[:,n,1])
+        plt.plot(pos[:,n,0], pos[:,n,1])
 
     plt.xlabel('x position')
     plt.ylabel('y position')
