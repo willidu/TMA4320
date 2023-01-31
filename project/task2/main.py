@@ -47,6 +47,7 @@ def dx_effective(x, y, tumor_pos, area, tk):
 
     return DX_MM * np.sqrt(tk_eff)
 
+@njit
 def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
     """
     Brownian motion for N particles with M steps in two dimensions.
@@ -65,7 +66,7 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
         Area of tumors (constant).
     pr : float
         Probability for taking a step to the right.
-    py : float
+    pu : float
         Probability for taking a step upwards.
 
     Returns
@@ -124,29 +125,27 @@ def task_2c():
     t, pos = brownian_N_2D_tumor(N, M, tumor_pos, tk, area)
 
     # To plot tumors in colors / dx_eff
-    # xmin = np.min(pos[:,:,0])
-    # xmax = np.max(pos[:,:,0])
-    # ymin = np.min(pos[:,:,1])
-    # ymax = np.max(pos[:,:,1])
     xmin, xmax = -DX_MM, L + DX_MM
     ymin, ymax = -DX_MM, L + DX_MM
-    nx, ny = 200, 200
-    x = np.linspace(xmin, xmax, nx)
-    y = np.linspace(ymin, ymax, ny)
-    dx = np.zeros((nx, ny))
-    for xi in range(nx):
-        for yi in range(ny):
-            dx[xi,yi] = dx_effective(x[xi], y[yi], tumor_pos, area, tk)
-    # dx = np.transpose(dx)
 
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
-
-    for n in range(N):
-        plt.plot(pos[:,n,0], pos[:,n,1])
+    # Calculating DX for color plot
+    n = 200
+    x = np.linspace(xmin, xmax, n)
+    y = np.linspace(ymin, ymax, n)
+    dx = np.zeros((n,n))
+    for xi in range(n):
+        for yi in range(n):
+            dx[yi,xi] = dx_effective(x[xi], y[yi], tumor_pos, area, tk)
 
     c = plt.pcolormesh(x, y, dx, cmap='plasma_r')
     plt.colorbar(c)
+
+    # Plotting random walk
+    for n in range(N):
+        plt.plot(pos[:,n,0], pos[:,n,1])
+
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
     plt.show()
 
 def main():
