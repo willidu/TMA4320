@@ -1,1 +1,0 @@
-Dette er Sophias fil.

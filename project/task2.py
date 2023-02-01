@@ -1,10 +1,8 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import njit
 
-sys.path.append('..')  # To allow imports from Task 1 folder
-from task1.main import D
+from task1 import D
 
 DX_MM = 0.004
 DT_S = 0.01
@@ -227,7 +225,7 @@ def task_2c():
     plt.show()
 
 def main():
-    # task_2a()
+    task_2a()
     task_2c()
 
 if __name__ == '__main__':
