@@ -120,6 +120,47 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L=None, pr=0.5, pu=0.5):
 
     return np.arange(M), positions
 
+def intensity(nx, ny, xmin, xmax, ymin, ymax, positions):
+    """
+    Denne funksjonen beregner intensiteten av virrevandrere til hver rute i et rutenett nx*ny.
+
+    Parametere
+    ----------
+    nx : int 
+        Antall rader
+    ny : int
+        Antall kolonner
+    xmin : float
+        Minste x-verdi i koordinatsystemet vårt
+    xmax : float
+        Største x-verdi i koordinatsystemet vårt
+    ymin : float
+        Minste y-verdi i koordinatsystemet vårt
+    ymax :
+        Største y-verdi i koordinatsystemet vårt
+    positions : np.ndarray[float]
+        shape = (M, N, 2). Matrise over posisjonene til N virrevandrere over M tidssteg
+
+    Returnerer
+    ----------
+    I : np.ndarry[float]
+        Normalisert matrise som inneholder intensiteten av virrevandre-bevegelse i hver rute nxny
+    """
+    I = np.zeros((nx,ny), dtype=float) #Her skal intensitetene lagres
+    M = positions.shape[0] #Henter ut tallet M som er første indeks i positions sin shape
+    N = positions.shape[1] #Henter ut tallet N som er andre indeks i positions sin shape
+
+    for t in range(M):
+        I += np.histogram2d(x = positions[t, :, 0], y = positions[t, :, 1], bins = (nx, ny), range = [[xmin,xmax], [ymin,ymax]])[0] 
+        #np.histogram returnerer flere ting, vi ønsker bare første element ([0]) som er selve histogrammet
+    return I/(M*N)
+
+def I_plot(nx, ny, xmin, xmax, ymin, ymax, positions):
+    I = intensity(nx, ny, xmin, xmax, ymin, ymax, positions)
+    plt.imshow(I, cmap = "gnuplot2_r")
+    cb = plt.colorbar()
+    plt.show()
+
 def sobel(im):
     """
     Applies Sobel filter on greyscale image.
@@ -231,6 +272,54 @@ def task_2c():
     plt.title('Task 2c')
     plt.show()
 
+def task_2f(show=False):
+    N = 2
+    M = 1000
+    m = 15
+    L = 0.02  # [mm]
+    nx = 40
+    ny = 40
+
+    xmin, xmax = -DX_MM, L + DX_MM
+    ymin, ymax = -DX_MM, L + DX_MM
+
+    tumor_pos = np.random.uniform(xmin, xmax, size=(m,2))
+    tk = np.random.uniform(0.3, 0.45, size=m)
+    area = np.pi * DX_MM ** 2
+    t, positions = brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L)
+    I = intensity(nx, ny, xmin, xmax, ymin, ymax, positions)
+
+    # Calculating DX for color plot
+    nr = 200
+    x = np.linspace(xmin, xmax, nr)
+    y = np.linspace(ymin, ymax, nr)
+    dx = np.zeros((nr,nr))
+    for xi in range(nr):
+        for yi in range(nr):
+            dx[yi,xi] = dx_effective(x[xi], y[yi], tumor_pos, area, tk)
+
+    fig, ax = plt.subplots(
+        1, 2, sharex=True, sharey=True, figsize=(9, 6),
+        subplot_kw={'xticks': [], 'yticks': []}  # Removes axes ticks and numbers
+    )
+    
+    cmap = 'gnuplot2_r'  #setting color
+
+    # Plotting figure of tumors
+    ax[0].imshow(dx, cmap)
+    ax[0].set(title='Tumorer')
+
+    # Plotting figure of intensity
+    ax[1].imshow(I, cmap)
+    ax[1].set(title='Intensitet')
+
+    plt.tight_layout()
+
+    if show:
+        plt.show()
+
+    return fig
+
 def test_periodic():
     N = 2
     M = 1000
@@ -272,10 +361,12 @@ def test_plot_sobel():
     plt.show()
 
 def main():
-    task_2a()
+    #task_2a()
     task_2c()
-    test_periodic()
-    test_plot_sobel()
+    #test_periodic()
+    #test_plot_sobel()
+    task_2f(show=True)
+
 
 if __name__ == '__main__':
     main()
