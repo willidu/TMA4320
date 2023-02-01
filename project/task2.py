@@ -1,3 +1,7 @@
+"""
+All lengths are in millimeters!
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import njit
@@ -46,7 +50,7 @@ def dx_effective(x, y, tumor_pos, area, tk):
     return DX_MM * np.sqrt(tk_eff)
 
 @njit
-def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
+def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L=None, pr=0.5, pu=0.5):
     """
     Brownian motion for N particles with M steps in two dimensions.
 
@@ -62,6 +66,8 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
         (m,) array with tumor coefficients.
     area : float
         Area of tumors (constant).
+    L : float
+        Length of bounding box (0, L) x (0, L).
     pr : float
         Probability for taking a step to the right.
     pu : float
@@ -76,112 +82,40 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
     """
     assert 0. < pr < 1., 'Invalid probability pr'
     assert 0. < pu < 1., 'Invalid probability pu'
+    if L is not None:
+        assert L > 0., 'Invalid value L'
 
     positions = np.zeros((M, N, 2))
     random_values = np.random.uniform(0, 1, size=(M,N))
     move_horizontal = np.random.uniform(0, 1, M) <= 0.5
 
-    for t in range(1, M):
+    for t in range(0, M-1):
         for n in range(N):
-            x, y = positions[t-1,n,0], positions[t-1,n,1]
+            x, y = positions[t,n,0], positions[t,n,1]
             dx_eff: float = dx_effective(x, y, tumor_pos, area, tk)
 
             if move_horizontal[t]:
                 # Keep y coordinate
-                positions[t,n,1] = positions[t-1,n,1]
+                positions[t+1,n,1] = positions[t,n,1]
 
                 # Update x coordinate
                 if random_values[t,n] <= pr:
-                    positions[t,n,0] = positions[t-1,n,0] + dx_eff
+                    positions[t+1,n,0] = positions[t,n,0] + dx_eff
                 else:
-                    positions[t,n,0] = positions[t-1,n,0] - dx_eff
+                    positions[t+1,n,0] = positions[t,n,0] - dx_eff
             else:
                 # Keep x coordinate
-                positions[t,n,0] = positions[t-1,n,0]
+                positions[t+1,n,0] = positions[t,n,0]
 
                 #Update y coordinate
                 if random_values[t,n] <= pu:
-                    positions[t,n,1] = positions[t-1,n,1] + dx_eff
+                    positions[t+1,n,1] = positions[t,n,1] + dx_eff
                 else:
-                    positions[t,n,1] = positions[t-1,n,1] - dx_eff
-
-    return np.arange(M), positions
-
-def brownian_N_2D_tumor_periodic(N, M, tumor_pos, tk, area, Lx, Ly, pr=0.5, pu=0.5):
-    """
-    Brownian motion for N particles with M steps in two dimensions.
-
-    Parameters
-    ----------
-    N : int
-        Number of particles
-    M : int
-        Number of moves.
-    tumor_pos : np.ndarray
-        ( m, (x,y) ) array with coordinates of tumor centers.
-    tk : np.ndarray
-        (m,) array with tumor coefficients.
-    area : float
-        Area of tumors (constant).
-    Lx : float
-        Length of bounding box in x direction. -L/2 to L/2
-    Ly : float
-        Length of bounding box in y direction.
-    pr : float
-        Probability for taking a step to the right.
-    pu : float
-        Probability for taking a step upwards.
-
-    Returns
-    -------
-    np.array
-        Time array, 1D.
-    np.array
-        Position array, 3D. Dimension ( M, N, (x,y) ).
-    """
-    assert 0. < pr < 1., 'Invalid probability pr'
-    assert 0. < pu < 1., 'Invalid probability pu'
-
-    positions = np.zeros((M, N, 2))
-    random_values = np.random.uniform(0, 1, size=(M,N))
-    move_horizontal = np.random.uniform(0, 1, M) <= 0.5
-
-    for t in range(1, M):
-        for n in range(N):
-            x, y = positions[t-1,n,0], positions[t-1,n,1]
-            dx_eff: float = dx_effective(x, y, tumor_pos, area, tk)
-
-            if move_horizontal[t]:
-                # Keep y coordinate
-                positions[t,n,1] = positions[t-1,n,1]
-
-                # Update x coordinate
-                if random_values[t,n] <= pr:
-                    positions[t,n,0] = positions[t-1,n,0] + dx_eff
-                else:
-                    positions[t,n,0] = positions[t-1,n,0] - dx_eff
-            else:
-                # Keep x coordinate
-                positions[t,n,0] = positions[t-1,n,0]
-
-                #Update y coordinate
-                if random_values[t,n] <= pu:
-                    positions[t,n,1] = positions[t-1,n,1] + dx_eff
-                else:
-                    positions[t,n,1] = positions[t-1,n,1] - dx_eff
+                    positions[t+1,n,1] = positions[t,n,1] - dx_eff
 
             # Periodic boundary conditions
-            # Update x
-            if positions[t,n,0] >= Lx/2.:
-                positions[t,n,0] = -Lx/2
-            elif positions[t,n,0] <= -Lx/2.:
-                positions[t,n,0] = Lx/2.
-
-            # Update y
-            if positions[t,n,1] >= Ly/2.:
-                positions[t,n,1] = -Ly/2.
-            elif positions[t,n,1] <= -Ly/2.:
-                positions[t,n,1] = Ly/2.
+            if L is not None:
+                positions[t+1,n] -= np.floor(positions[t+1,n] / L) * L
 
     return np.arange(M), positions
 
@@ -222,11 +156,48 @@ def task_2c():
 
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
+    plt.title('Task 2c')
+    plt.show()
+
+def test_periodic():
+    N = 2
+    M = 1000
+    m = 15
+    L = 0.02  # [mm]
+
+    xmin, xmax = 0, L
+    ymin, ymax = 0, L
+
+    tumor_pos = np.random.uniform(xmin, xmax, size=(m,2))
+    tk = np.full(shape=m, fill_value=0.1)
+    area = np.pi * DX_MM ** 2
+    t, pos = brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L)
+
+    # Calculating DX for color plot
+    n = 300
+    x = np.linspace(xmin, xmax, n)
+    y = np.linspace(ymin, ymax, n)
+    dx = np.zeros((n,n))
+    for xi in range(n):
+        for yi in range(n):
+            dx[yi,xi] = dx_effective(x[xi], y[yi], tumor_pos, area, tk)
+
+    c = plt.pcolormesh(x, y, dx, cmap='plasma_r')
+    plt.colorbar(c)
+
+    # Plotting random walk
+    for n in range(N):
+        plt.scatter(pos[:,n,0], pos[:,n,1])
+
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.title('Periodic boundary conditions')
     plt.show()
 
 def main():
     task_2a()
     task_2c()
+    test_periodic()
 
 if __name__ == '__main__':
     main()
