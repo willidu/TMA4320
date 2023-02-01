@@ -5,6 +5,7 @@ All lengths are in millimeters!
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import njit
+from scipy import ndimage
 
 from task1 import D
 
@@ -119,6 +120,77 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L=None, pr=0.5, pu=0.5):
 
     return np.arange(M), positions
 
+def sobel(im):
+    """
+    Applies Sobel filter on greyscale image.
+
+    Parameters
+    ----------
+    im : np.ndarray[int]
+        (nx, ny) Array containing values for greyscale image.
+
+    Returns
+    -------
+    Sx : np.ndarray[int]
+        (nx, ny) Sobel filter result in X direction.
+    Sy : np.ndarray[int]
+        (nx, ny) Sobel filter result in Y direction.
+    mag : np.ndarray[int]
+        (nx, ny) Sobel filter normalized magnitude.
+    """
+    Sx = ndimage.sobel(im, axis=0)
+    Sy = ndimage.sobel(im, axis=1)
+    magnitude = np.sqrt(Sx ** 2 + Sy ** 2)
+    magnitude *= 255. / np.max(magnitude)  # Normalizing
+    return Sx, Sy, magnitude
+
+def plot_sobel(im, show=False):
+    """
+    Apply Sobel filter on a greyscale image and plot the result.
+
+    Parameters
+    ----------
+    im : np.ndarray[int]
+        (nx, ny) Array containing values for greysacle image.
+    show : bool
+        Default False. Triggers plt.show().
+
+    Returns
+    -------
+    plt.figure()
+        Subplot figure.
+    """
+    fig, ax = plt.subplots(
+        2, 2, sharex=True, sharey=True, figsize=(9, 6),
+        subplot_kw={'xticks': [], 'yticks': []}  # Removes axes ticks and numbers
+    )
+    cmap = 'Greys_r'  # Greysacle colormap
+    Sx, Sy, mag = sobel(im)
+
+    # Plotting original figure
+    ax[0,0].imshow(im, cmap)
+    ax[0,0].set(title='Original')
+
+    # Plotting Sobel x direction
+    ax[0,1].imshow(Sx, cmap)
+    ax[0,1].set(title='X')
+
+    # Plotting Sobel y direction
+    ax[1,0].imshow(Sy, cmap)
+    ax[1,0].set(title='Y')
+
+    # Plotting Sobel magnitude
+    ax[1,1].imshow(mag, cmap)
+    ax[1,1].set(title='S')
+
+    plt.suptitle('Sobel filter', size='x-large', weight='bold')
+    plt.tight_layout()
+
+    if show:
+        plt.show()
+
+    return fig
+
 def task_2a():
     print(f'D = {D(0.004,0.01):.1e}')
 
@@ -194,10 +266,16 @@ def test_periodic():
     plt.title('Periodic boundary conditions')
     plt.show()
 
+def test_plot_sobel():
+    im_arr = plt.imread('sobel_test_fig.jpg').astype('int32')
+    fig = plot_sobel(im_arr)
+    plt.show()
+
 def main():
     task_2a()
     task_2c()
     test_periodic()
+    test_plot_sobel()
 
 if __name__ == '__main__':
     main()
