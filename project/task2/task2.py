@@ -109,6 +109,84 @@ def brownian_N_2D_tumor(N, M, tumor_pos, tk, area, pr=0.5, pu=0.5):
 
     return np.arange(M), positions
 
+def brownian_N_2D_tumor_periodic(N, M, tumor_pos, tk, area, Lx, Ly, pr=0.5, pu=0.5):
+    """
+    Brownian motion for N particles with M steps in two dimensions.
+
+    Parameters
+    ----------
+    N : int
+        Number of particles
+    M : int
+        Number of moves.
+    tumor_pos : np.ndarray
+        ( m, (x,y) ) array with coordinates of tumor centers.
+    tk : np.ndarray
+        (m,) array with tumor coefficients.
+    area : float
+        Area of tumors (constant).
+    Lx : float
+        Length of bounding box in x direction. -L/2 to L/2
+    Ly : float
+        Length of bounding box in y direction.
+    pr : float
+        Probability for taking a step to the right.
+    pu : float
+        Probability for taking a step upwards.
+
+    Returns
+    -------
+    np.array
+        Time array, 1D.
+    np.array
+        Position array, 3D. Dimension ( M, N, (x,y) ).
+    """
+    assert 0. < pr < 1., 'Invalid probability pr'
+    assert 0. < pu < 1., 'Invalid probability pu'
+
+    positions = np.zeros((M, N, 2))
+    random_values = np.random.uniform(0, 1, size=(M,N))
+    move_horizontal = np.random.uniform(0, 1, M) <= 0.5
+
+    for t in range(1, M):
+        for n in range(N):
+            x, y = positions[t-1,n,0], positions[t-1,n,1]
+            dx_eff: float = dx_effective(x, y, tumor_pos, area, tk)
+
+            if move_horizontal[t]:
+                # Keep y coordinate
+                positions[t,n,1] = positions[t-1,n,1]
+
+                # Update x coordinate
+                if random_values[t,n] <= pr:
+                    positions[t,n,0] = positions[t-1,n,0] + dx_eff
+                else:
+                    positions[t,n,0] = positions[t-1,n,0] - dx_eff
+            else:
+                # Keep x coordinate
+                positions[t,n,0] = positions[t-1,n,0]
+
+                #Update y coordinate
+                if random_values[t,n] <= pu:
+                    positions[t,n,1] = positions[t-1,n,1] + dx_eff
+                else:
+                    positions[t,n,1] = positions[t-1,n,1] - dx_eff
+
+            # Periodic boundary conditions
+            # Update x
+            if positions[t,n,0] >= Lx/2.:
+                positions[t,n,0] = -Lx/2
+            elif positions[t,n,0] <= -Lx/2.:
+                positions[t,n,0] = Lx/2.
+
+            # Update y
+            if positions[t,n,1] >= Ly/2.:
+                positions[t,n,1] = -Ly/2.
+            elif positions[t,n,1] <= -Ly/2.:
+                positions[t,n,1] = Ly/2.
+
+    return np.arange(M), positions
+
 def task_2a():
     print(f'D = {D(0.004,0.01):.1e}')
 
