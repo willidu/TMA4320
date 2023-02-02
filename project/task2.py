@@ -153,7 +153,7 @@ def intensity(nx, ny, xmin, xmax, ymin, ymax, positions):
     for t in range(M):
         I += np.histogram2d(x = positions[t, :, 0], y = positions[t, :, 1], bins = (nx, ny), range = [[xmin,xmax], [ymin,ymax]])[0] 
         #np.histogram returnerer flere ting, vi ønsker bare første element ([0]) som er selve histogrammet
-    return I/(M*N)
+    return I / (M * N)
 
 def I_plot(nx, ny, xmin, xmax, ymin, ymax, positions):
     I = intensity(nx, ny, xmin, xmax, ymin, ymax, positions)
@@ -272,16 +272,16 @@ def task_2c():
     plt.title('Task 2c')
     plt.show()
 
-def task_2f(show=False):
-    N = 2
+def task_2f():
+    N = 1000
     M = 1000
     m = 15
     L = 0.02  # [mm]
     nx = 40
     ny = 40
 
-    xmin, xmax = -DX_MM, L + DX_MM
-    ymin, ymax = -DX_MM, L + DX_MM
+    xmin, xmax = 0, L
+    ymin, ymax = 0, L
 
     tumor_pos = np.random.uniform(xmin, xmax, size=(m,2))
     tk = np.random.uniform(0.3, 0.45, size=m)
@@ -299,26 +299,43 @@ def task_2f(show=False):
             dx[yi,xi] = dx_effective(x[xi], y[yi], tumor_pos, area, tk)
 
     fig, ax = plt.subplots(
-        1, 2, sharex=True, sharey=True, figsize=(9, 6),
+        ncols=2, sharex=False, sharey=False, figsize=(9, 4),
         subplot_kw={'xticks': [], 'yticks': []}  # Removes axes ticks and numbers
     )
-    
-    cmap = 'gnuplot2_r'  #setting color
 
     # Plotting figure of tumors
-    ax[0].imshow(dx, cmap)
-    ax[0].set(title='Tumorer')
+    im = ax[0].pcolormesh(x, y, dx, cmap='PuBuGn_r')
+    # im = ax[0].imshow(dx, cmap='plasma_r')
+    ax[0].set(title='Tumorer', xlim=(xmin, xmax), ylim=(ymin,ymax), aspect='equal')
+    # plt.colorbar(im, ax=ax[0], fraction=0.045)
 
     # Plotting figure of intensity
-    ax[1].imshow(I, cmap)
-    ax[1].set(title='Intensitet')
+    im = ax[1].imshow(I*100, cmap='PuBuGn', interpolation='bessel')
+    ax[1].set(title='Intensitet [%]', aspect='equal')
+    plt.colorbar(im, ax=ax[1], fraction=0.045)
 
     plt.tight_layout()
+    plt.suptitle('Oppgave 2e')
+    plt.show()
 
-    if show:
-        plt.show()
+def task_2g():
+    N = 1000
+    M = 1000
+    m = 15
+    L = 0.02  # [mm]
+    nx = 80
+    ny = 80
 
-    return fig
+    xmin, xmax = 0, L
+    ymin, ymax = 0, L
+
+    tumor_pos = np.random.uniform(xmin, xmax, size=(m,2))
+    tk = np.random.uniform(0.3, 0.45, size=m)
+    area = np.pi * DX_MM ** 2
+    t, positions = brownian_N_2D_tumor(N, M, tumor_pos, tk, area, L)
+    I = intensity(nx, ny, xmin, xmax, ymin, ymax, positions)
+
+    plot_sobel(I, show=True)
 
 def test_periodic():
     N = 2
@@ -361,11 +378,12 @@ def test_plot_sobel():
     plt.show()
 
 def main():
-    #task_2a()
+    task_2a()
     task_2c()
-    #test_periodic()
-    #test_plot_sobel()
-    task_2f(show=True)
+    # test_periodic()
+    # test_plot_sobel()
+    task_2f()
+    task_2g()
 
 
 if __name__ == '__main__':
