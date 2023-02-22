@@ -78,12 +78,15 @@ def truncSVD(U, Z, Vt, d):
 def task_a(prints=False, checks=False):
     U, Z, Vt = SVD_calculation(A1, printing=prints, check=checks)
     #Discussion: Which of the basis vectors in U (=W1) is the most important one for reconstructing A1?
+    #Answer: The first(s) columns contain the most information about A as they will be multiplied with the largest
+    #singular values
     return U, Z, Vt
 
 def task_b(prints=False, checks=False):
     U, Z, Vt = SVD_calculation(A2, printing=prints, check=checks)
     return U, Z, Vt
 
+<<<<<<< Updated upstream
 def task_c():
     # Test matrix A1
     U, Z, Vt = SVD_calculation(A1)
@@ -92,6 +95,12 @@ def task_c():
     print(Pw)
     print(dist(W=U, B=B))
     # -> [0, 1, 0]. Ok.
+=======
+def truncSVD(U, Z, Vt, d):
+    U_kopi = U.copy()
+    Z_kopi = Z.copy()
+    Vt_kopi = Vt.copy()
+>>>>>>> Stashed changes
 
     # Test matrix A2
     print('\nA2')
