@@ -6,7 +6,7 @@ from task1 import SVD_calculation
 N_TRAIN = 1000
 N_TEST = 200
 ENMF_MAXITER = 50
-PLOT_INT = 7  # Change this to 4 if you would like to train on the number 4.
+PLOT_INT = 7  # Class. Change this to 4 if you would like to train on the number 4.
 
 # Handed out function
 def plotimgs(imgs, nplot = 4):
