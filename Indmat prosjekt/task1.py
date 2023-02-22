@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 #Initialising testmatrices
 A1 = np.array(((1000, 1), (0, 1), (0, 0)))
 A2 = np.array(((1,0,0), (1,0,0), (0,0,1)))
-B = np.array(((2,0,0), (1,0,1), (0,0,1)))
+B = np.array(((2,0,0), (1,0,1), (0,1,0)))
 
 def SVD_calculation(matrix, printing=False, check=False):
     """
@@ -44,6 +44,37 @@ def SVD_calculation(matrix, printing=False, check=False):
 
     return U, Z, Vt
 
+def orthoproj(W, B):
+    """
+    Calculate the orthogonal prjection of colums in matrix B onto the basis in W.
+    Eq. (14).
+
+    Parametes
+    ---------
+    W : np.ndarray (m, d)
+        Basis dictionary with orthonormal colum vectors to be projected onto.
+    B : np.ndarray, (d, n)
+        Idk a matrix
+    """
+    return W @ (W.T @ B)
+
+def dist(W, B):
+    """
+    Columnwise distance between projected vectors and the vector space. (?)
+    Eq. (15), (16)
+
+    Parametes
+    ---------
+    W : np.ndarray (m, d)
+        Basis dictionary with orthonormal colum vectors to be projected onto.
+    B : np.ndarray, (d, n)
+        Idk a matrix
+    """
+    return np.linalg.norm(B - orthoproj(W=W, B=B), ord=2, axis=0)
+
+def truncSVD(U, Z, Vt, d):
+    return
+
 def task_a(prints=False, checks=False):
     U, Z, Vt = SVD_calculation(A1, printing=prints, check=checks)
     #Discussion: Which of the basis vectors in U (=W1) is the most important one for reconstructing A1?
@@ -53,7 +84,22 @@ def task_b(prints=False, checks=False):
     U, Z, Vt = SVD_calculation(A2, printing=prints, check=checks)
     return U, Z, Vt
 
-def truncSVD(U, Z, Vt, d):
+def task_c():
+    # Test matrix A1
+    U, Z, Vt = SVD_calculation(A1)
+    Pw = orthoproj(W=U, B=B)
+    print('\nA1')
+    print(Pw)
+    print(dist(W=U, B=B))
+    # -> [0, 1, 0]. Ok.
 
-    return
+    # Test matrix A2
+    print('\nA2')
+    U, Z, Vt = SVD_calculation(A2)
+    Pw = orthoproj(W=U, B=B)
+    print(Pw)
+    print(dist(W=U, B=B))
+    # -> [0, 0, 0]. Feil?
 
+if __name__ == '__main__':
+    task_c()
