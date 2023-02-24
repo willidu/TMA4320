@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from task1 import SVD_calculation
+from task1 import SVD_calculation, truncSVD
 
 N_TRAIN = 1000
 N_TEST = 200
 ENMF_MAXITER = 50
-PLOT_INT = 7  # Class. Change this to 4 if you would like to train on the number 4.
+PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
 
 # Handed out function
 def plotimgs(imgs, nplot = 4):
@@ -21,7 +21,7 @@ def plotimgs(imgs, nplot = 4):
     n = imgs.shape[1]
     m = int(np.sqrt(imgs.shape[0]))
 
-    assert(n > nplot**2), "Need amount of data in matrix N > nplot**2"
+    assert(n >= nplot**2), "Need amount of data in matrix N > nplot**2"
 
     # Initialize subplots
     fig, axes = plt.subplots(nplot,nplot)
@@ -54,11 +54,11 @@ def task_2b():
     # Loading the first N pictures of digit PLOT_INT
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
     U, Z, Vt = SVD_calculation(A)
-    plotimgs(U)
+    W, H = truncSVD(U, Z, Vt, d=16)
+    plotimgs(W)
 
     singular_values = np.diag(Z)
     rank = np.linalg.matrix_rank(Z)
-    print(rank)
 
     plt.semilogy(np.arange(rank), singular_values[:rank])
     plt.title(f'Singular values 0 - {rank}')
