@@ -72,14 +72,18 @@ def dist(W, B):
     """
     return np.linalg.norm(B - orthoproj(W=W, B=B), ord=2, axis=0)
 
-def truncSVD(A, d, verbose=False, test=False):
+def truncSVD(U, Z, Vt, d, verbose=False, test=False):
     """
-    Calculate the truncated SVD of a matrix.
+    Calculate the truncated SVD given the SVD factorization of a matrix.
 
     Parameters
     ----------
-    A : np.ndarray (m, n)
-        Columnwise dataset
+    U : np.ndarray (m, n)
+        Orthogonal matrix with singular vectors of A.
+    Z : np.ndarray (n, n)
+        Diagonal matrix containing singular values of A.
+    Vt : np.ndarray
+        Orthogonal matrix
     d : int
         Number of singular values (<= n)
 
@@ -90,15 +94,12 @@ def truncSVD(A, d, verbose=False, test=False):
     H : np.ndarray (d, n)
         Truncated weights
     """
-    U, Z, Vt = SVD_calculation(A)
-
     # Truncating
     U = U[:,:d]
     Z = Z[:d,:d]
     Vt = Vt[:d,:]
 
     if verbose:
-        print(f"A = \n {A}" + "\n")
         print(f"U = \n {U}" + "\n")
         print(f"Sigma =\n {Z}" + "\n")
         print(f"V^T =\n {Vt}" + "\n")
@@ -116,9 +117,9 @@ def task_a(prints=False, checks=False):
     return U, Z, Vt
 
 def task_b(prints=False, checks=False):
-    SVD_calculation(A2, printing=prints, check=checks)
+    U, Z, Vt = SVD_calculation(A2, printing=prints, check=checks)
     # Observing that the last singular value is 0, so it can be removed
-    truncSVD(A2, d=2, verbose=True, test=True)
+    W, H = truncSVD(U, Z, Vt, d=2, verbose=True, test=True)
 
 def task_c():
     # Test matrix A1
