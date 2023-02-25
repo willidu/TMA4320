@@ -86,7 +86,7 @@ def plot_projection(projections, d_values, image):
     plt.suptitle('Projection on dictionary ' + r'$W=U_d$', fontsize=20)
     plt.show()
 
-def EMNF_dict(matrix, d):
+def ENMF_dict(matrix, d):
     """
     Calculate an exemplar-based non-negative dictionary.
 
@@ -206,7 +206,7 @@ def task_2e():
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
 
     # ENMF approach
-    W = EMNF_dict(A, d=32)
+    W = ENMF_dict(A, d=32)
     _, P = nnproj(W, A)
     plotimgs(P)
 
