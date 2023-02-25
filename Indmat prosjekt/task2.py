@@ -6,7 +6,7 @@ from task1 import SVD_calculation, truncSVD, orthoproj
 N_TRAIN = 1000
 N_TEST = 200
 ENMF_MAXITER = 50
-PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
+PLOT_INT = 7  # Class. Change this to 4 if you would like to train on the number 4.
 
 #Initialising testmatrix
 B = np.asarray([
@@ -150,30 +150,42 @@ def task_2c():
     plot_projection(projections_other, d, image_other)
 
 def task_2d():
-    d = np.arange(1, 784, 30) #Values for d
+    d = np.arange(1, 500, 10) #Values for d
     image_index = 15  # Arbitrary image in A
 
+    #Image 1
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
     image = A[:,image_index]
     U, Z, Vt = SVD_calculation(A)
-    normF = np.zeros(len(d))
+    #Image 2
+    other_digit=0
+    image_other = np.load('train.npy')[:,other_digit,image_index] / 255.0
+    #Creating y-vectors
+    normF_1 = np.zeros(len(d))
+    normF_2 = np.zeros(len(d))
+    
 
     for i, d_value in enumerate(d):
-        # For global digit
         W, H = truncSVD(U, Z, Vt, d=d_value)
         #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
-        C = image - orthoproj(W, image)
+        C1 = image - orthoproj(W, image)
+        C2 = image_other - orthoproj(W, image_other)
         #Calculating the squared Frobenius norm of C
-        normF[i] = np.sum(C**2)
+        normF_1[i] = np.sum(C1**2)
+        normF_2[i] = np.sum(C2**2)
 
     #Plotting results
-    plt.semilogy(d, normF)
+    plt.semilogy(d, normF_2, label="Non-trained digit")
+    plt.semilogy(d, normF_1, label="Trained digit")
+    plt.title("Frobenius norms")
     plt.xlabel("d-values")
     plt.ylabel("Squared Frobenius norm of A - P_w(A)")
+    plt.legend()
     plt.show()
+
 
 if __name__ == '__main__':
     #task_2a()
-    #task_2b()
+    task_2b()
     #task_2c()
     task_2d()
