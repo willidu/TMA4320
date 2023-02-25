@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from task1 import SVD_calculation, truncSVD, orthoproj
+from task1 import SVD_calculation, truncSVD, orthoproj, nnproj
 
 N_TRAIN = 1000
 N_TEST = 200
-ENMF_MAXITER = 50
 PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
 
 #Initialising testmatrix
@@ -87,6 +86,38 @@ def plot_projection(projections, d_values, image):
     fig.tight_layout()
     plt.suptitle('Projection on dictionary ' + r'$W=U_d$', fontsize=20)
     plt.show()
+
+def EMNF_dict(matrix, d):
+    """
+    Calculate an exemplar-based non-negative dictionary.
+
+    Parameters
+    ----------
+    matrix : np.ndarray (m, n)
+    d : int
+        Number of columns to be selected. Needs to be <= n.
+
+    Returns
+    -------
+    W : np.ndarray (m, d)
+        Non-negative trained dictionary.
+
+    Raises
+    ------
+    ValueError. If d > n. 
+    """
+    W = np.array(matrix, copy=True, dtype=float)
+    n = W.shape[1]
+
+    if n == d:
+        return W
+
+    elif d < n:
+        rng = np.random.default_rng()
+        return rng.choice(W, size = d, axis = 1, replace = False)
+
+    else:
+        raise ValueError('Invalid d value, must be less than number of columns in W')
 
 def task_2a():
     train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
@@ -172,8 +203,22 @@ def task_2d():
     plt.ylabel("Squared Frobenius norm of A - P_w(A)")
     plt.show()
 
+def task_2e():
+    A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
+
+    # ENMF approach
+    W = EMNF_dict(A, d=32)
+    _, P = nnproj(W, A)
+    plotimgs(P)
+
+    # SVD for comparison
+    W, _ = truncSVD(*SVD_calculation(A), d=32)
+    P = orthoproj(W, A)
+    plotimgs(P)
+
 if __name__ == '__main__':
     #task_2a()
     #task_2b()
-    #task_2c()
-    task_2d()
+    # task_2c()
+    # task_2d()
+    task_2e()
