@@ -8,6 +8,7 @@ N_TEST = 200
 ENMF_MAXITER = 50
 PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
 
+#Initialising testmatrix
 B = np.asarray([
     [2, 0, 0],
     [1, 0, 1],
@@ -19,9 +20,13 @@ def plotimgs(imgs, nplot = 4):
     """
     Plots the nplot*nplot first images in imgs on an nplot x nplot grid. 
     Assumes heigth = width, and that the images are stored columnwise
-    input:
-        imgs: (height*width,N) array containing images, where N > nplot**2
-        nplot: integer, nplot**2 images will be plotted
+    
+    Parameters
+    ----------
+    imgs : np.ndarray
+        (height*width,N) array containing images, where N > nplot**2
+    nplot : int
+        nplot**2 images will be plotted
     """
 
     n = imgs.shape[1]
@@ -109,7 +114,7 @@ def task_2b():
 
 def task_2c():
     """
-    Here we do a lot of stuff for two different digits.
+    Here we do a lot of stuff for two different digits. TODO
     One is set at the top of the file (named PLOT_INT)
     The other is chosen to be either 0 or 1.
     """

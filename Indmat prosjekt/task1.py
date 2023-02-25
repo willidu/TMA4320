@@ -23,26 +23,43 @@ def SVD_calculation(matrix, printing=False, check=False):
 
     Returns
     -------
-    U : np.ndarray
-        Orthogonal matrix with singular vectors of A.
-    Z : np.ndarray
-        shape=(n,n). Diagonal matrix containing singular values of A.
-    Vt : np.ndarray
-        Orthogonal matrix
+    U : np.ndarray (m, d)
+        Left singular matrix where columns contain the eigenvectors of A*A.T (testmatrix * testmatrix.transposed).
+    Z : np.ndarray (d, d)
+        Diagonal matrix containing singular values.
+    Vt : np.ndarray (d, d)
+        Right singular matrix where columns contain the eigenvectors of A.T*A (testmatrix.transposed * testmatrix).
     """
     U, S, Vt = np.linalg.svd(matrix, full_matrices=False)
     Z = np.diag(S)
 
-    if printing:
-        print(f"A = \n {matrix}" + "\n")
-        print(f"U = \n {U}" + "\n")
-        print(f"Zigma =\n {Z}" + "\n")
-        print(f"V_transponert =\n {Vt}" + "\n")
-    if check:
-        A_check = U@Z@Vt
-        print(f"U*Z*V_transponert = \n {A_check}")
-
     return U, Z, Vt
+
+def printAndCheck(A, U, Z, Vt):
+    """
+    Prints matrices. Checks if their product is equal to desired matrix.
+
+    Parameters
+    ----------
+    A : np.ndarray (m, d)
+        Desired matrix. 
+    U : np.ndarray (m, d)
+        Left singular matrix where columns contain the eigenvectors of A*A.T (testmatrix * testmatrix.transposed).
+    Z : np.ndarray (d, d)
+        Diagonal matrix containing singular values.
+    Vt : np.ndarray (d, d)
+        Right singular matrix where columns contain the eigenvectors of A.T*A (testmatrix.transposed * testmatrix).
+
+    """
+    print(f"Original matrix = \n {A}" + "\n")
+    print(f"U = \n {U}" + "\n")
+    print(f"Zigma =\n {Z}" + "\n")
+    print(f"V_transponert =\n {Vt}" + "\n")
+    
+    A_check = U@Z@Vt
+    print(f"U*Z*V_transponert = \n {A_check}")
+    np.testing.assert_almost_equal(A_check, A, decimal=5, err_msg="They are not equal to five decimalpoints.", verbose=True)
+
 
 def orthoproj(W, B):
     """
@@ -78,14 +95,18 @@ def truncSVD(U, Z, Vt, d, verbose=False, test=False):
 
     Parameters
     ----------
-    U : np.ndarray (m, n)
-        Orthogonal matrix with singular vectors of A.
-    Z : np.ndarray (n, n)
-        Diagonal matrix containing singular values of A.
-    Vt : np.ndarray
-        Orthogonal matrix
+    U : np.ndarray (m, d)
+        Left singular matrix where columns contain the eigenvectors of A*A.T (testmatrix * testmatrix.transposed).
+    Z : np.ndarray (d, d)
+        Diagonal matrix containing singular values.
+    Vt : np.ndarray (d, d)
+        Right singular matrix where columns contain the eigenvectors of A.T*A (testmatrix.transposed * testmatrix).
     d : int
-        Number of singular values (<= n)
+        Number of singular values (<= n).
+    verbose : bool
+        Default=False. If True, print SVD matrices.
+    test : bool
+        Default=False. If True, print the matrix product of SVD matrices.
 
     Returns
     -------
@@ -110,32 +131,33 @@ def truncSVD(U, Z, Vt, d, verbose=False, test=False):
     return U, Z @ Vt
 
 def task_a(prints=False, checks=False):
-    U, Z, Vt = SVD_calculation(A1, printing=prints, check=checks)
+    U, Z, Vt = SVD_calculation(A1)
+    printAndCheck(A1, U, Z, Vt)
     #Discussion: Which of the basis vectors in U (=W1) is the most important one for reconstructing A1?
     #Answer: The first(s) columns contain the most information about A as they will be multiplied with the largest
     #singular values
-    return U, Z, Vt
 
 def task_b(prints=False, checks=False):
-    U, Z, Vt = SVD_calculation(A2, printing=prints, check=checks)
+    U, Z, Vt = SVD_calculation(A2)
+    printAndCheck(A2, U, Z, Vt)
     # Observing that the last singular value is 0, so it can be removed
     W, H = truncSVD(U, Z, Vt, d=2, verbose=True, test=True)
 
 def task_c():
     # Test matrix A1
     U, Z, Vt = SVD_calculation(A1)
-    Pw = orthoproj(W=U, B=B)
+    Pw = orthoproj(W=U, B=B) #Calculating projection
     print('\nA1')
     print(Pw)
-    print(dist(W=U, B=B))
+    print(dist(W=U, B=B)) #Calculating distance
     # -> [0, 1, 0]. Ok.
 
     # Test matrix A2
     print('\nA2')
     U, Z, Vt = SVD_calculation(A2)
-    Pw = orthoproj(W=U, B=B)
+    Pw = orthoproj(W=U, B=B) #Calculating projection
     print(Pw)
-    print(dist(W=U, B=B))
+    print(dist(W=U, B=B)) #Calculating distance
     # -> [0, 0, 0]. Feil?
 
 if __name__ == '__main__':
