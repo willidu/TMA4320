@@ -127,14 +127,14 @@ def truncSVD(U, Z, Vt, d, verbose=False, test=False):
     # W = U, H = Sigma V^T
     return U, Z @ Vt
 
-def task_a(prints=False, checks=False):
+def task_a():
     U, Z, Vt = SVD_calculation(A1)
     printAndCheck(A1, U, Z, Vt)
     #Discussion: Which of the basis vectors in U (=W1) is the most important one for reconstructing A1?
     #Answer: The first(s) columns contain the most information about A as they will be multiplied with the largest
     #singular values
 
-def task_b(prints=False, checks=False):
+def task_b():
     U, Z, Vt = SVD_calculation(A2)
     printAndCheck(A2, U, Z, Vt)
     # Observing that the last singular value is 0, so it can be removed
@@ -153,37 +153,52 @@ def task_c():
     print(dist(B, Pw))
     # -> [0, 0, 0]. Feil?
 
-def ENMF_calculation(matrix, d, maxiter=50, delta=1e-10):
-    A  = matrix.copy()
-    n = A.shape[1]
-    
-    if n == d:
-        W = A
-    else:
-        rng = np.random.default_rng()
-        W = rng.choice(A, size = d, axis = 1, replace = False)
+def nnproj(W, B, maxiter=50, delta=1e-10):
+    """
+    Calculate the Non-Negative projection from matrix B onto dictionary W.
+
+    Parameters
+    ----------
+    W : np.ndarray (m, d)
+        Non-negative dictionary.
+    B : np.ndarray (m, n)
+        Matrix to project.
+
+    Returns
+    -------
+    H : np.ndarray (d, n)
+        Non-negative weights.
+    P_W(B) : np.ndarray (m, n)
+        Non-negative projection of B onto W.
+    """
+    d = W.shape[1]
+    n = B.shape[1]
 
     H = np.random.uniform(0, 1, (d, n))
-    matrix_1 = W.T @ A
+
+    # Checking if dim B = (m, n)
+    assert B.shape == (W.shape[0], H.shape[1]), f'Mismached dimensions {B.shape} != {(W.shape[0], H.shape[1])}'
+
+    matrix_1 = W.T @ B
     matrix_2 = W.T @ W
 
     for _ in range(maxiter):
         H = H * matrix_1 / (matrix_2 @ H + delta)
 
-    return W, H
-
-def nnproj(W, H):
-    return W @ H
+    return H, W @ H
 
 def task_d():
-    print(A1)
-    W, H = ENMF_calculation(A1, d=2)
-    P = nnproj(W, H)
-    print(P)
-    dists = dist(B, P)
-    print(dists)
+    for A in (A1, A2):
+        H, P = nnproj(W=A, B=B)
+        dists = dist(B, P)
+
+        print(f'Weights H = \n{H}\n'
+            + f'Projection of B onto A \n{P}\n'
+            + f'Distances {dists} \n'
+            + '------------------------'
+        )
 
 if __name__ == '__main__':
-    # task_b(True, True)
+    # task_b()
     # task_c()
     task_d()

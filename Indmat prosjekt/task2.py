@@ -128,13 +128,11 @@ def task_2c():
 
     # Remember to only load and calculate SVD once in the notebook
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
-    B = np.load('train.npy')[:,other_digit,:N_TRAIN] / 255.0
 
     U, Z, Vt = SVD_calculation(A)
-    U_other, Z_other, Vt_other = SVD_calculation(B)
 
     image = A[:,image_index]
-    image_other = B[:,image_index]
+    image_other = np.load('train.npy')[:,other_digit,image_index] / 255.0
 
     projections = np.zeros((len(d), A.shape[0]))
     projections_other = np.zeros_like(projections)
@@ -145,8 +143,7 @@ def task_2c():
         projections[i] = orthoproj(W, image)
 
         # For other digit
-        W_other, _ = truncSVD(U_other, Z_other, Vt_other, d=d_value)
-        projections_other[i] = orthoproj(W_other, image_other)
+        projections_other[i] = orthoproj(W, image_other)
 
     # Plotting projections and original image
     plot_projection(projections, d, image)
