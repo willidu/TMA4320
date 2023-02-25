@@ -58,19 +58,16 @@ def orthoproj(W, B):
     """
     return W @ (W.T @ B)
 
-def dist(W, B):
+def dist(B, proj):
     """
     Columnwise distance between projected vectors and the vector space. (?)
     Eq. (15), (16)
 
     Parametes
     ---------
-    W : np.ndarray (m, d)
-        Basis dictionary with orthonormal colum vectors to be projected onto.
-    B : np.ndarray, (d, n)
-        Idk a matrix
+    TODO
     """
-    return np.linalg.norm(B - orthoproj(W=W, B=B), ord=2, axis=0)
+    return np.linalg.norm(B - proj, ord=2, axis=0)
 
 def truncSVD(U, Z, Vt, d, verbose=False, test=False):
     """
@@ -125,19 +122,15 @@ def task_c():
     # Test matrix A1
     U, Z, Vt = SVD_calculation(A1)
     Pw = orthoproj(W=U, B=B)
-    print('\nA1')
-    print(Pw)
-    print(dist(W=U, B=B))
+    print(dist(B, Pw))
     # -> [0, 1, 0]. Ok.
 
     # Test matrix A2
-    print('\nA2')
     U, Z, Vt = SVD_calculation(A2)
     Pw = orthoproj(W=U, B=B)
-    print(Pw)
-    print(dist(W=U, B=B))
+    print(dist(B, Pw))
     # -> [0, 0, 0]. Feil?
 
 if __name__ == '__main__':
     task_b(True, True)
-    # task_c()
+    task_c()
