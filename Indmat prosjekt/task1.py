@@ -75,19 +75,16 @@ def orthoproj(W, B):
     """
     return W @ (W.T @ B)
 
-def dist(W, B):
+def dist(B, proj):
     """
     Columnwise distance between projected vectors and the vector space. (?)
     Eq. (15), (16)
 
     Parametes
     ---------
-    W : np.ndarray (m, d)
-        Basis dictionary with orthonormal colum vectors to be projected onto.
-    B : np.ndarray, (d, n)
-        Idk a matrix
+    TODO
     """
-    return np.linalg.norm(B - orthoproj(W=W, B=B), ord=2, axis=0)
+    return np.linalg.norm(B - proj, ord=2, axis=0)
 
 def truncSVD(U, Z, Vt, d, verbose=False, test=False):
     """
@@ -146,20 +143,47 @@ def task_b(prints=False, checks=False):
 def task_c():
     # Test matrix A1
     U, Z, Vt = SVD_calculation(A1)
-    Pw = orthoproj(W=U, B=B) #Calculating projection
-    print('\nA1')
-    print(Pw)
-    print(dist(W=U, B=B)) #Calculating distance
+    Pw = orthoproj(W=U, B=B)
+    print(dist(B, Pw))
     # -> [0, 1, 0]. Ok.
 
     # Test matrix A2
-    print('\nA2')
     U, Z, Vt = SVD_calculation(A2)
-    Pw = orthoproj(W=U, B=B) #Calculating projection
-    print(Pw)
-    print(dist(W=U, B=B)) #Calculating distance
+    Pw = orthoproj(W=U, B=B)
+    print(dist(B, Pw))
     # -> [0, 0, 0]. Feil?
 
+def ENMF_calculation(matrix, d, maxiter=50, delta=1e-10):
+    A  = matrix.copy()
+    n = A.shape[1]
+    
+    if n == d:
+        W = A
+    else:
+        rng = np.random.default_rng()
+        W = rng.choice(A, size = d, axis = 1, replace = False)
+
+    H = np.random.uniform(0, 1, (d, n))
+    matrix_1 = W.T @ A
+    matrix_2 = W.T @ W
+
+    for _ in range(maxiter):
+        H = H * matrix_1 / (matrix_2 @ H + delta)
+
+    return W, H
+
+def nnproj(W, H):
+    return W @ H
+
+def task_d():
+    print(A1)
+    W, H = ENMF_calculation(A1, d=2)
+    P = nnproj(W, H)
+    print(P)
+    dists = dist(B, P)
+    print(dists)
+
 if __name__ == '__main__':
-    task_b(True, True)
+    # task_b(True, True)
     # task_c()
+    task_d()
