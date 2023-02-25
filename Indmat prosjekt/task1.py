@@ -129,10 +129,6 @@ def task_c():
     print(Pw)
     print(dist(W=U, B=B))
     # -> [0, 1, 0]. Ok.
-def truncSVD(U, Z, Vt, d):
-    U_kopi = U.copy()
-    Z_kopi = Z.copy()
-    Vt_kopi = Vt.copy()
 
     # Test matrix A2
     print('\nA2')
