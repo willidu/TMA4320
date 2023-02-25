@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from task1 import SVD_calculation, truncSVD, orthoproj, nnproj
 
 N_TRAIN = 1000
-N_TEST = 200
 PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
 
 #Initialising testmatrix
@@ -217,8 +216,8 @@ def task_2e():
     plotimgs(P)
 
 if __name__ == '__main__':
-    #task_2a()
-    #task_2b()
-    # task_2c()
-    # task_2d()
+    task_2a()
+    task_2b()
+    task_2c()
+    task_2d()
     task_2e()
