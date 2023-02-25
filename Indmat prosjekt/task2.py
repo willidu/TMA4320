@@ -1,12 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from task1 import SVD_calculation
+from task1 import SVD_calculation, truncSVD, orthoproj
 
 N_TRAIN = 1000
 N_TEST = 200
 ENMF_MAXITER = 50
-PLOT_INT = 7  # Class. Change this to 4 if you would like to train on the number 4.
+PLOT_INT = 3  # Class. Change this to 4 if you would like to train on the number 4.
+
+B = np.asarray([
+    [2, 0, 0],
+    [1, 0, 1],
+    [0, 1, 0]
+], dtype=float)
 
 # Handed out function
 def plotimgs(imgs, nplot = 4):
@@ -21,7 +27,7 @@ def plotimgs(imgs, nplot = 4):
     n = imgs.shape[1]
     m = int(np.sqrt(imgs.shape[0]))
 
-    assert(n > nplot**2), "Need amount of data in matrix N > nplot**2"
+    assert(n >= nplot**2), "Need amount of data in matrix N > nplot**2"
 
     # Initialize subplots
     fig, axes = plt.subplots(nplot,nplot)
@@ -46,6 +52,37 @@ def plotimgs(imgs, nplot = 4):
     fig.tight_layout()
     plt.show()
 
+def plot_projection(projections, d_values, image):
+    """
+    Plots the projection for different values of d.
+
+    Parameters
+    ----------
+    projections : np.ndarray (len(d), 784)
+        Array with different projections.
+    d_values : np.ndarray (m,)
+        Different d values used for projections.
+    image : np.ndarray (784,)
+        Original image used for projections.
+    """
+    fig, axes = plt.subplots(nrows=1, ncols=len(d_values)+1, figsize=(10,4))
+    plt.gcf().set_facecolor("lightgray")
+
+    axes = axes.flatten()  # flatten so they are easier to iterate over
+    for i, ax in enumerate(axes):
+        if i == 0:
+            ax.imshow(image.reshape((28,28)), cmap='gray')
+            ax.set(title='Original image')
+        else:
+            ax.imshow(projections[i-1].reshape((28,28)), cmap='gray')
+            ax.set(title=f'd = {d_values[i-1]}')
+
+        ax.axis('off')
+
+    fig.tight_layout()
+    plt.suptitle('Projection on dictionary ' + r'$W=U_d$', fontsize=20)
+    plt.show()
+
 def task_2a():
     train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
     plotimgs(train[:,PLOT_INT,100:])
@@ -54,11 +91,11 @@ def task_2b():
     # Loading the first N pictures of digit PLOT_INT
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
     U, Z, Vt = SVD_calculation(A)
-    plotimgs(U)
+    W, H = truncSVD(U, Z, Vt, d=16)
+    plotimgs(W)
 
     singular_values = np.diag(Z)
     rank = np.linalg.matrix_rank(Z)
-    print(rank)
 
     plt.semilogy(np.arange(rank), singular_values[:rank])
     plt.title(f'Singular values 0 - {rank}')
@@ -70,6 +107,47 @@ def task_2b():
     # Observing that the first numbers have the highest value, which corresponds to more important
     # to reconstruct A
 
+def task_2c():
+    """
+    Here we do a lot of stuff for two different digits.
+    One is set at the top of the file (named PLOT_INT)
+    The other is chosen to be either 0 or 1.
+    """
+    d = (16, 32, 64, 128)
+    image_index = 15  # Arbitrary image in A and B
+
+    if PLOT_INT == 0:
+        other_digit = 1  # If global plot digit is zero, we chose another digit
+    else:
+        other_digit = 0
+
+    # Remember to only load and calculate SVD once in the notebook
+    A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
+    B = np.load('train.npy')[:,other_digit,:N_TRAIN] / 255.0
+
+    U, Z, Vt = SVD_calculation(A)
+    U_other, Z_other, Vt_other = SVD_calculation(B)
+
+    image = A[:,image_index]
+    image_other = B[:,image_index]
+
+    projections = np.zeros((len(d), A.shape[0]))
+    projections_other = np.zeros_like(projections)
+
+    for i, d_value in enumerate(d):
+        # For global digit
+        W, H = truncSVD(U, Z, Vt, d=d_value)
+        projections[i] = orthoproj(W, image)
+
+        # For other digit
+        W_other, _ = truncSVD(U_other, Z_other, Vt_other, d=d_value)
+        projections_other[i] = orthoproj(W_other, image_other)
+
+    # Plotting projections and original image
+    plot_projection(projections, d, image)
+    plot_projection(projections_other, d, image_other)
+
 if __name__ == '__main__':
-    # task_2a()
+    task_2a()
     task_2b()
+    task_2c()
