@@ -152,7 +152,31 @@ def task_2c():
     plot_projection(projections, d, image)
     plot_projection(projections_other, d, image_other)
 
+def task_2d():
+    d = np.arange(1, 784, 30) #Values for d
+    image_index = 15  # Arbitrary image in A
+
+    A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
+    image = A[:,image_index]
+    U, Z, Vt = SVD_calculation(A)
+    normF = np.zeros(len(d))
+
+    for i, d_value in enumerate(d):
+        # For global digit
+        W, H = truncSVD(U, Z, Vt, d=d_value)
+        #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
+        C = image - orthoproj(W, image)
+        #Calculating the squared Frobenius norm of C
+        normF[i] = np.sum(C**2)
+
+    #Plotting results
+    plt.semilogy(d, normF)
+    plt.xlabel("d-values")
+    plt.ylabel("Squared Frobenius norm of A - P_w(A)")
+    plt.show()
+
 if __name__ == '__main__':
-    task_2a()
-    task_2b()
-    task_2c()
+    #task_2a()
+    #task_2b()
+    #task_2c()
+    task_2d()
