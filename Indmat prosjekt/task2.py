@@ -87,7 +87,7 @@ def plot_projection(projections, d_values, image):
     plt.suptitle('Projection on dictionary ' + r'$W=U_d$', fontsize=20)
     plt.show()
 
-def EMNF_dict(matrix, d):
+def ENMF_dict(matrix, d):
     """
     Calculate an exemplar-based non-negative dictionary.
 
@@ -219,7 +219,7 @@ def task_2e():
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
 
     # ENMF approach
-    W = EMNF_dict(A, d=32)
+    W = ENMF_dict(A, d=32)
     _, P = nnproj(W, A)
     plotimgs(P)
 
@@ -245,7 +245,7 @@ def task_tf():
     
 
     for i, d_value in enumerate(d):
-        W = EMNF_dict(A, d_value)
+        W = ENMF_dict(A, d_value)
         #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
         C1 = image - orthoproj(W, image)
         C2 = image_other - orthoproj(W, image_other)
