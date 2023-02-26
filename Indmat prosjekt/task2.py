@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from task1 import SVD_calculation, truncSVD, orthoproj
+from task1 import SVD_calculation, truncSVD, orthoproj, nnproj
 
 N_TRAIN = 1000
 N_TEST = 200
-ENMF_MAXITER = 50
 PLOT_INT = 7  # Class. Change this to 4 if you would like to train on the number 4.
 
 #Initialising testmatrix
@@ -88,6 +87,38 @@ def plot_projection(projections, d_values, image):
     plt.suptitle('Projection on dictionary ' + r'$W=U_d$', fontsize=20)
     plt.show()
 
+def EMNF_dict(matrix, d):
+    """
+    Calculate an exemplar-based non-negative dictionary.
+
+    Parameters
+    ----------
+    matrix : np.ndarray (m, n)
+    d : int
+        Number of columns to be selected. Needs to be <= n.
+
+    Returns
+    -------
+    W : np.ndarray (m, d)
+        Non-negative trained dictionary.
+
+    Raises
+    ------
+    ValueError. If d > n. 
+    """
+    W = np.array(matrix, copy=True, dtype=float)
+    n = W.shape[1]
+
+    if n == d:
+        return W
+
+    elif d < n:
+        rng = np.random.default_rng()
+        return rng.choice(W, size = d, axis = 1, replace = False)
+
+    else:
+        raise ValueError('Invalid d value, must be less than number of columns in W')
+
 def task_2a():
     train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
     plotimgs(train[:,PLOT_INT,100:])
@@ -150,7 +181,8 @@ def task_2c():
     plot_projection(projections_other, d, image_other)
 
 def task_2d():
-    d = np.arange(1, 500, 10) #Values for d
+    N = 10
+    d = np.arange(1, 784, N) #Values for d
     image_index = 15  # Arbitrary image in A
 
     #Image 1
@@ -177,15 +209,63 @@ def task_2d():
     #Plotting results
     plt.semilogy(d, normF_2, label="Non-trained digit")
     plt.semilogy(d, normF_1, label="Trained digit")
-    plt.title("Frobenius norms")
-    plt.xlabel("d-values")
+    plt.title("Frobenius norm: SVD approach")
+    plt.xlabel(f"d-values, steplength={N}")
     plt.ylabel("Squared Frobenius norm of A - P_w(A)")
     plt.legend()
     plt.show()
 
+def task_2e():
+    A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
+
+    # ENMF approach
+    W = EMNF_dict(A, d=32)
+    _, P = nnproj(W, A)
+    plotimgs(P)
+
+    # SVD for comparison
+    W, _ = truncSVD(*SVD_calculation(A), d=32)
+    P = orthoproj(W, A)
+    plotimgs(P)
+
+def task_tf():
+    N = 50
+    d = np.arange(1,1000, N)
+    image_index = 15  # Arbitrary image in A
+
+    #Image 1
+    A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
+    image = A[:,image_index]
+    #Image 2
+    other_digit=0
+    image_other = np.load('train.npy')[:,other_digit,image_index] / 255.0
+    #Creating y-vectors
+    normF_1 = np.zeros(len(d))
+    normF_2 = np.zeros(len(d))
+    
+
+    for i, d_value in enumerate(d):
+        W = EMNF_dict(A, d_value)
+        #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
+        C1 = image - orthoproj(W, image)
+        C2 = image_other - orthoproj(W, image_other)
+        #Calculating the squared Frobenius norm of C
+        normF_1[i] = np.sum(C1**2)
+        normF_2[i] = np.sum(C2**2)
+
+    #Plotting results
+    plt.semilogy(d, normF_2, label="Non-trained digit")
+    plt.semilogy(d, normF_1, label="Trained digit")
+    plt.title("Frobenius norm: EMNF approach")
+    plt.xlabel(f"d-values, steplength={N}")
+    plt.ylabel("Squared Frobenius norm of A - P_w(A)")
+    plt.legend()
+    plt.show()
 
 if __name__ == '__main__':
     #task_2a()
-    task_2b()
-    #task_2c()
+    #task_2b()
+    # task_2c()
     task_2d()
+    # task_2e()
+    task_tf()

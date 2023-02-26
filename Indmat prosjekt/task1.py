@@ -199,6 +199,7 @@ def task_d():
         )
 
 if __name__ == '__main__':
-    # task_b()
-    # task_c()
+    task_a()
+    task_b()
+    task_c()
     task_d()
