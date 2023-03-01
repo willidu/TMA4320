@@ -184,25 +184,28 @@ def task_2c():
 def task_2d():
     N = 10
     d = np.arange(1, 784, N) #Values for d
-    image_index = 15  # Arbitrary image in A
 
-    #Image 1
+    if PLOT_INT == 0:
+        other_digit = 1  # If global plot digit is zero, we chose another digit
+    else:
+        other_digit = 0
+
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
-    image = A[:,image_index]
-    U, Z, Vt = SVD_calculation(A)
-    #Image 2
-    other_digit=0
-    image_other = np.load('train.npy')[:,other_digit,image_index] / 255.0
-    #Creating y-vectors
-    normF_1 = np.zeros(len(d))
-    normF_2 = np.zeros(len(d))
+    B = np.load('train.npy')[:,other_digit,:N_TRAIN] / 255.0
     
+    U, Z, Vt = SVD_calculation(A)
 
+    #Creating y-vectors
+    normF_1 = np.zeros_like(d)
+    normF_2 = np.zeros_like(d)
+    
     for i, d_value in enumerate(d):
-        W, H = truncSVD(U, Z, Vt, d=d_value)
-        #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
-        C1 = image - orthoproj(W, image)
-        C2 = image_other - orthoproj(W, image_other)
+        W, _ = truncSVD(U, Z, Vt, d=d_value)
+
+        # Projecting and difference
+        C1 = A - orthoproj(W, A)
+        C2 = B - orthoproj(W, B)
+
         #Calculating the squared Frobenius norm of C
         normF_1[i] = np.sum(C1**2)
         normF_2[i] = np.sum(C2**2)
@@ -229,27 +232,31 @@ def task_2e():
     P = orthoproj(W, A)
     plotimgs(P)
 
-def task_tf():
-    N = 50
-    d = np.arange(1,1000, N)
-    image_index = 15  # Arbitrary image in A
+def task_2f():
+    d = np.logspace(1, 3, num=10, dtype=int)
 
-    #Image 1
+    if PLOT_INT == 0:
+        other_digit = 1  # If global plot digit is zero, we chose another digit
+    else:
+        other_digit = 0
+
     A = np.load('train.npy')[:,PLOT_INT,:N_TRAIN] / 255.0
-    image = A[:,image_index]
-    #Image 2
-    other_digit=0
-    image_other = np.load('train.npy')[:,other_digit,image_index] / 255.0
-    #Creating y-vectors
-    normF_1 = np.zeros(len(d))
-    normF_2 = np.zeros(len(d))
-    
+    B = np.load('train.npy')[:,other_digit,:N_TRAIN] / 255.0
 
+    #Creating y-vectors
+    normF_1 = np.zeros_like(d)
+    normF_2 = np.zeros_like(d)
+    
     for i, d_value in enumerate(d):
         W = ENMF_dict(A, d_value)
-        #Find the difference between a matrix A and its projections down on W (the truncated U-matrix from A's SVD)
-        C1 = image - orthoproj(W, image)
-        C2 = image_other - orthoproj(W, image_other)
+
+        # Projection
+        _, proj1 = nnproj(W, A)
+        _, proj2 = nnproj(W, B)
+
+        C1 = A - proj1
+        C2 = B - proj2
+
         #Calculating the squared Frobenius norm of C
         normF_1[i] = np.sum(C1**2)
         normF_2[i] = np.sum(C2**2)
@@ -258,15 +265,15 @@ def task_tf():
     plt.semilogy(d, normF_2, label="Non-trained digit")
     plt.semilogy(d, normF_1, label="Trained digit")
     plt.title("Frobenius norm: EMNF approach")
-    plt.xlabel(f"d-values, steplength={N}")
+    plt.xlabel(f"d-values")
     plt.ylabel("Squared Frobenius norm of A - P_w(A)")
     plt.legend()
     plt.show()
 
 if __name__ == '__main__':
-    #task_2a()
-    #task_2b()
-    # task_2c()
+    task_2a()
+    task_2b()
+    task_2c()
     task_2d()
-    # task_2e()
-    task_tf()
+    task_2e()
+    task_2f()

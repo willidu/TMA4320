@@ -1,11 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from task1 import dist, orthoproj, nnproj, SVD_calculation, truncSVD
 from task2 import plotimgs, ENMF_dict
 
-N_TRAIN = 1000
+N_TRAIN = 1024
 N_TEST = 200
+PLOT_DIGIT = 7
 
 # Handed out code
 def generate_test(test, digits = [0,1,2], N = 800):
@@ -111,7 +113,7 @@ def analyze_classification(test_labels, trained_labels, digits):
     # Counting
     for a, b in zip(trained_labels, test_labels):
         if a == b:
-            class_count[a] += 1
+            class_count[int(a)] += 1
         class_possible[int(b)] += 1
         
     recall = class_count / class_possible
@@ -239,7 +241,48 @@ def task_3e():
         print(f'Accuracy : {accuracy:.3f}')
         print(f'Recall : {recall}')
 
+def task_3f():
+    """
+    Change train_digits to fewer digits or change d values to lower runtime!
+    """
+    # Training
+    train_digits = np.arange(5)  # Will train on 0 ... 9
+    train = np.load('train.npy')[:,train_digits,:N_TRAIN] / 255.0
+
+    # List with elements U1, Z1, Vt1, U2, Z2, ...
+    SVD_dicts = [SVD_calculation(train[:,i,:]) for i in train_digits]
+
+    # Testing
+    test = np.load('test.npy') / 255.0
+    test_digits = train_digits.copy()  # Will test all training digits
+    A_test, A_labels = generate_test(test, digits=train_digits, N=N_TEST)
+
+    d = np.logspace(1, 10, base=2, num=10, dtype=int)
+    accuracies = np.zeros((10, 2))
+
+    for i, d_value in enumerate(tqdm(d)):
+        # Training
+        truncSVD_dicts = [truncSVD(U, Z, Vt, d=d_value)[0] for U, Z, Vt in SVD_dicts]
+        ENMF_dicts = [ENMF_dict(train[:,i,:], d=d_value) for i in train_digits]
+
+        # Testing
+        classes_SVD = classification(A_test, truncSVD_dicts, SVD=True)
+        classes_ENMF = classification(A_test, ENMF_dicts, SVD=False)
+        
+        # Finding correct classifications
+        accuracy_svd, _ = analyze_classification(classes_SVD, A_labels, digits=test_digits)
+        accuracy_enmf, _ = analyze_classification(classes_ENMF, A_labels, digits=test_digits)
+
+        accuracies[i] = accuracy_svd, accuracy_enmf
+        
+    fig, ax = plt.subplots(1, 1, figsize=(8,8))
+    ax.plot(d, accuracies[:,0], '-o', label='SVD')
+    ax.plot(d, accuracies[:,1], '-o', label='ENMF')
+    ax.legend(loc='lower right')
+    ax.set(xlabel='$d$ value', ylabel='Accuracy [--]')
+    plt.title('Accuracy for SVD and ENMF\n' + '$d = 2^i,\ i = 1,\dots,10$\n' + f'Digits: {train_digits}')
+    plt.show()
+
 if __name__ == '__main__':
-    #task_3b()
-    #task_3e()
-    task_3c_d()
+    # task_3b()
+    task_3f()
