@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from task1 import dist, orthoproj, nnproj, SVD_calculation, truncSVD
 from task2 import plotimgs, ENMF_dict
@@ -51,7 +52,7 @@ def get_distances(B, dict_list, SVD=True):
     dict_list : list[np.ndarray]
         List with dictionaries trained on different digits (and with different methods).
     SVD : bool
-        Default False. Triggers either orthonormal (SVD) or non-negative (ENMF) projection
+        Default True. Triggers either orthonormal (SVD) or non-negative (ENMF) projection
     
     Returns
     -------
@@ -74,7 +75,7 @@ def classification(B, dict_list, SVD=True):
     dict_list : list[np.ndarray]
         List with dictionaries trained on different digits (and with different methods).
     SVD : bool
-        Default False. Triggers either orthonormal (SVD) or non-negative (ENMF) projection
+        Default True. Triggers either orthonormal (SVD) or non-negative (ENMF) projection
     
     Returns
     -------
@@ -90,7 +91,7 @@ def analyze_classification(test_labels, trained_labels, digits):
     Parameters
     ----------
     test_labels : np.ndarray (n,)
-        Class labels as integets 0-9.
+        Class labels as integers 0-9.
     trained_labels : np.ndarray (n,)
         Known (correct) class labels as integers 0-9.
     digits : np.ndarray (num_digits,)
@@ -138,7 +139,95 @@ def task_3b():
     print("Test labels shape: ", A_labels.shape)
     print("First 16 labels: ", A_labels[:16])
     # plotimgs(A_test, nplot = 4)
+    
+    for dict_list, svd in zip((dict_list_SVD, dict_list_ENMF), (True, False)):
+        print('\nSVD') if svd else print('\nENMF')
 
+        # Classification
+        classes = classification(A_test, dict_list, svd)
+
+        # Analysis
+        accuracy, recall = analyze_classification(A_labels, classes, digits)
+        print(f'Accuracy : {accuracy:.3f}')
+        print(f'Recall : {recall}')
+
+def task_3c_d():
+    train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
+    train_digits = np.arange(10)
+    digit = 0 #Digit we want to check
+
+    # Training with ENMF
+    W_list_ENMF = [ENMF_dict(matrix=train[:,i,:], d=32) for i in train_digits]
+    
+    # Training with ENMF and saving projections
+    proj_list_ENMF = [nnproj(W_list_ENMF[i], train[:,i,:])[1] for i in train_digits]
+
+    #Classify digits
+    test = np.load('test.npy') / 255.0
+    train_test, train_truedigits = generate_test(test, digits=train_digits, N=N_TEST)
+    computers_digits = classification(train_test, W_list_ENMF, SVD=False)
+    
+    #Locating misclassified zero-image
+    for i, (a, b) in enumerate(zip(train_truedigits, computers_digits)):
+        if a==0:
+            if a!=b:
+                misclassifiedImageIndex = i
+                break
+    assert misclassifiedImageIndex!=None, "No mismatches found"
+
+    #Locating best image
+    bestImageIndex = np.argmin(dist(train[:,digit,:], proj_list_ENMF[0]))
+    train = train[:,digit,:]
+    bestW = train[:,bestImageIndex]
+    bestProj = proj_list_ENMF[0][:,bestImageIndex]
+
+    #Locating worst image
+    #worstImageIndex = np.argmax(dist(train, proj_list_ENMF[0]))
+    worstW = train[:,misclassifiedImageIndex]
+    worstProj = proj_list_ENMF[0][:,misclassifiedImageIndex]
+
+    # Initialize subplots
+    fig, axes = plt.subplots(2, 2)
+    fig.subplots_adjust(hspace=0.5)
+
+    # Set background color
+    plt.gcf().set_facecolor("lightgray")
+    #Plotting best image and its projection onto basis
+    axes[0, 0].imshow(bestW.reshape((28,28)), cmap='gray')
+    axes[0, 1].imshow(bestProj.reshape((28,28)), cmap='gray')
+    axes[0, 0].set_title("Best reconstructed image")
+    axes[0, 1].set_title("Projection onto its basis")
+    
+    #Plotting worst image and its projection onto basis
+    axes[1, 0].imshow(worstW.reshape((28,28)))
+    axes[1, 1].imshow(worstProj.reshape((28,28)))
+    axes[1, 0].set_title("Misclassified image")
+    axes[1, 1].set_title("Projection onto its basis")
+    plt.show()
+
+def task_3e():
+    # Loading training data
+    train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
+    train_digits = np.arange(6)
+
+    # Training with SVD
+    dict_list_SVD = [truncSVD(*SVD_calculation(matrix=train[:,i,:]), d=32)[0] for i in train_digits]
+
+    # Training with ENMF
+    dict_list_ENMF = [ENMF_dict(matrix=train[:,i,:], d=32) for i in train_digits]
+    
+    # Test setup
+    # digits = [0,1,2]
+    digits = train_digits.copy()
+    test = np.load('test.npy') / 255.0
+
+    # Handed out code
+    A_test, A_labels = generate_test(test, digits=digits, N=N_TEST)
+    print("Test data shape: ", A_test.shape)
+    print("Test labels shape: ", A_labels.shape)
+    print("First 16 labels: ", A_labels[:16])
+    # plotimgs(A_test, nplot = 4)
+    
     for dict_list, svd in zip((dict_list_SVD, dict_list_ENMF), (True, False)):
         print('\nSVD') if svd else print('\nENMF')
 
@@ -151,4 +240,6 @@ def task_3b():
         print(f'Recall : {recall}')
 
 if __name__ == '__main__':
-    task_3b()
+    #task_3b()
+    #task_3e()
+    task_3c_d()

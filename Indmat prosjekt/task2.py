@@ -94,6 +94,7 @@ def ENMF_dict(matrix, d):
     Parameters
     ----------
     matrix : np.ndarray (m, n)
+        TODO
     d : int
         Number of columns to be selected. Needs to be <= n.
 

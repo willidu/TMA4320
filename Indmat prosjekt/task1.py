@@ -71,7 +71,7 @@ def orthoproj(W, B):
     W : np.ndarray (m, d)
         Basis dictionary with orthonormal colum vectors to be projected onto.
     B : np.ndarray, (d, n)
-        Idk a matrix
+        Idk a matrix TODO
     """
     return W @ (W.T @ B)
 
