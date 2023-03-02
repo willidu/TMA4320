@@ -114,6 +114,8 @@ def analyze_classification(test_labels, trained_labels, digits):
         if a == b:
             class_count[int(a)] += 1
         class_possible[int(b)] += 1
+
+        # The int(a) and int(b) solution only works if digits are from np.arange :(
         
     recall = class_count / class_possible
     return accuracy, recall
@@ -225,6 +227,7 @@ def task_3c_d():
 def task_3e():
     # Loading training data
     train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
+    # train_digits = np.asarray([0, 1, 2, 7, 9])
     train_digits = np.arange(6)
 
     # Training with SVD
@@ -234,16 +237,11 @@ def task_3e():
     dict_list_ENMF = [ENMF_dict(matrix=train[:,i,:], d=32) for i in train_digits]
     
     # Test setup
-    # digits = [0,1,2]
-    digits = train_digits.copy()
     test = np.load('test.npy') / 255.0
+    test_digits = train_digits.copy()
 
-    # Handed out code
-    A_test, A_labels = generate_test(test, digits=digits, N=N_TEST)
-    print("Test data shape: ", A_test.shape)
-    print("Test labels shape: ", A_labels.shape)
-    print("First 16 labels: ", A_labels[:16])
-    # plotimgs(A_test, nplot = 4)
+    # Generating test data
+    A_test, A_labels = generate_test(test, digits=test_digits, N=N_TEST)
     
     for dict_list, svd in zip((dict_list_SVD, dict_list_ENMF), (True, False)):
         print('\nSVD') if svd else print('\nENMF')
@@ -252,8 +250,9 @@ def task_3e():
         classes = classification(A_test, dict_list, svd)
 
         # Analysis
-        accuracy, recall = analyze_classification(A_labels, classes, digits)
+        accuracy, recall = analyze_classification(A_labels, classes, test_digits)
         print(f'Accuracy : {accuracy:.3f}')
+        print(f'Digits : {test_digits}')
         print(f'Recall : {recall}')
 
 def task_3f():
@@ -299,7 +298,7 @@ def task_3f():
     plt.show()
 
 if __name__ == '__main__':
-    # task_3b()
-    # task_3c_d()
+    task_3b()
+    task_3c_d()
     task_3e()
-    # task_3f()
+    task_3f()
