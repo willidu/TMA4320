@@ -165,7 +165,7 @@ def task_3c_d():
     A_test, A_labels = generate_test(test, digits=test_digits, N=N_TEST)
     test_labels = classification(A_test, W_list_ENMF, SVD=False)
 
-    proj = np.asarray([nnproj(W_list_ENMF[i], A_test)[1] for i in train_digits]) # proj is ( class, 784, N_TRAIN * len(test_digits) )
+    proj = np.asarray([nnproj(W_list_ENMF[i], A_test)[1] for i in test_digits]) # proj is ( class, 784, N_TRAIN * len(test_digits) )
     distances = np.asarray(get_distances(A_test, proj, SVD=False))
 
     # Locating best image
@@ -300,5 +300,6 @@ def task_3f():
 
 if __name__ == '__main__':
     # task_3b()
-    task_3c_d()
+    # task_3c_d()
+    task_3e()
     # task_3f()
