@@ -7,7 +7,6 @@ from task2 import plotimgs, ENMF_dict
 
 N_TRAIN = 1024
 N_TEST = 200
-PLOT_DIGIT = 7
 
 # Handed out code
 def generate_test(test, digits = [0,1,2], N = 800):
@@ -155,56 +154,72 @@ def task_3b():
 
 def task_3c_d():
     train = np.load('train.npy')[:,:,:N_TRAIN] / 255.0
-    train_digits = np.arange(10)
-    digit = 0 #Digit we want to check
+    train_digits = np.arange(3)  # Training on 0 .. 3
 
     # Training with ENMF
     W_list_ENMF = [ENMF_dict(matrix=train[:,i,:], d=32) for i in train_digits]
-    
-    # Training with ENMF and saving projections
-    proj_list_ENMF = [nnproj(W_list_ENMF[i], train[:,i,:])[1] for i in train_digits]
 
-    #Classify digits
-    test = np.load('test.npy') / 255.0
-    train_test, train_truedigits = generate_test(test, digits=train_digits, N=N_TEST)
-    computers_digits = classification(train_test, W_list_ENMF, SVD=False)
-    
+    # Classify test digits
+    test = np.load('test.npy')[:,:,:N_TEST] / 255.0
+    test_digits = train_digits.copy()  # Testing on all train digits
+    A_test, A_labels = generate_test(test, digits=test_digits, N=N_TEST)
+    test_labels = classification(A_test, W_list_ENMF, SVD=False)
+
+    proj = np.asarray([nnproj(W_list_ENMF[i], A_test)[1] for i in train_digits]) # proj is ( class, 784, N_TRAIN * len(test_digits) )
+    distances = np.asarray(get_distances(A_test, proj, SVD=False))
+
+    # Locating best image
+    bestImageIndex = np.argmin(distances[0])
+    bestImage = A_test[:,bestImageIndex]
+    bestImageProj = proj[0,:,bestImageIndex]
+
+    assert bestImageIndex < len(test_digits)*N_TEST, "Best image index is bigger than number of images in test dataset."
+
     #Locating misclassified zero-image
-    for i, (a, b) in enumerate(zip(train_truedigits, computers_digits)):
-        if a==0:
-            if a!=b:
+    misclassifiedImageIndex = None
+    for i, (a, b) in enumerate(zip(A_labels, test_labels)):
+        if a == 0:
+            if a != b:
+                misclassified_class = b
                 misclassifiedImageIndex = i
                 break
-    assert misclassifiedImageIndex!=None, "No mismatches found"
 
-    #Locating best image
-    bestImageIndex = np.argmin(dist(train[:,digit,:], proj_list_ENMF[0]))
-    train = train[:,digit,:]
-    bestW = train[:,bestImageIndex]
-    bestProj = proj_list_ENMF[0][:,bestImageIndex]
+    assert misclassifiedImageIndex is not None, "No mismatches found"
 
-    #Locating worst image
-    #worstImageIndex = np.argmax(dist(train, proj_list_ENMF[0]))
-    worstW = train[:,misclassifiedImageIndex]
-    worstProj = proj_list_ENMF[0][:,misclassifiedImageIndex]
+    # Locating misclassified image
+    misclassifiedImage = A_test[:,misclassifiedImageIndex]
+    missclassifiedImageProj_1 = proj[0,:,misclassifiedImageIndex]
+    missclassifiedImageProj_2 = proj[misclassified_class,:,misclassifiedImageIndex]
 
     # Initialize subplots
-    fig, axes = plt.subplots(2, 2)
+    fig, axes = plt.subplots(2, 3, figsize=(8,6))
     fig.subplots_adjust(hspace=0.5)
 
     # Set background color
     plt.gcf().set_facecolor("lightgray")
+
     #Plotting best image and its projection onto basis
-    axes[0, 0].imshow(bestW.reshape((28,28)), cmap='gray')
-    axes[0, 1].imshow(bestProj.reshape((28,28)), cmap='gray')
-    axes[0, 0].set_title("Best reconstructed image")
-    axes[0, 1].set_title("Projection onto its basis")
+    axes[0, 0].imshow(bestImage.reshape((28,28)), cmap='gray')
+    axes[0, 0].set_title("Best reconstructed image \n(class 0)")
+
+    axes[0, 1].imshow(bestImageProj.reshape((28,28)), cmap='gray')
+    axes[0, 1].set_title(r"Projection onto $W_0^+$")
     
     #Plotting worst image and its projection onto basis
-    axes[1, 0].imshow(worstW.reshape((28,28)))
-    axes[1, 1].imshow(worstProj.reshape((28,28)))
-    axes[1, 0].set_title("Misclassified image")
-    axes[1, 1].set_title("Projection onto its basis")
+    axes[1, 0].imshow(misclassifiedImage.reshape((28,28)), cmap='gray')
+    axes[1, 0].set_title(f"Misclassified image\n(class {misclassified_class:.0f})")
+
+    axes[1, 1].imshow(missclassifiedImageProj_1.reshape((28,28)), cmap='gray')
+    axes[1, 1].set_title(r"Projection onto $W_0^+$")
+
+    axes[1, 2].imshow(missclassifiedImageProj_2.reshape((28,28)), cmap='gray')
+    class_label = f"W_{misclassified_class:.0f}^+"
+    axes[1, 2].set_title("Projection onto " + f'${class_label}$')
+
+    for ax in axes.flatten():
+        ax.axis('off')  # Removing axis ticks
+
+    plt.tight_layout()
     plt.show()
 
 def task_3e():
@@ -285,4 +300,5 @@ def task_3f():
 
 if __name__ == '__main__':
     # task_3b()
-    task_3f()
+    task_3c_d()
+    # task_3f()
